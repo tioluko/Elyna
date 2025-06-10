@@ -21,7 +21,7 @@ function freshstats(u) {
   //const u = getUserData(user.id);
   return {
     RXP: 10 + (((u.NV - 1)**2) * 10),
-    MPV: 10 + (u.RES * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPV || 0),
+    MPV: 10 + ((u.RES + u.TAM) * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPV || 0),
     MPM: 10 + (u.ESS * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPM || 0),
     MPE: 10 + (u.CAR * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPE || 0),
     MPR: Math.max(u.Adf, u.Arq, u.Des, u.Arb, u.Atl, u.Mag) + (u.modPR || 0),
@@ -71,7 +71,7 @@ function addxp(u, amt) {
 
 function calculateStats(u) {
   return {
-    MPV: 10 + (u.RES * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPV || 0),
+    MPV: 10 + ((u.RES + u.TAM) * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPV || 0),
     MPM: 10 + (u.ESS * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPM || 0),
     MPE: 10 + (u.CAR * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPE || 0),
     MPR: Math.max(u.Adf, u.Arq, u.Des, u.Arb, u.Atl, u.Mag) + (u.modPR || 0),
@@ -210,7 +210,7 @@ function getTotalStats(user) {
 
 function npcInitialize(u) {
   return {
-    MPV: 10 + (u.RES * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPV || 0),
+    MPV: 10 + ((u.RES + u.TAM) * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPV || 0),
     MPM: 10 + (u.ESS * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPM || 0),
     MPE: 10 + (u.CAR * (u.NV + 2)) + ((u.NV - 1) * 4) + (u.modPE || 0),
     MPR: Math.max(u.Adf, u.Arq, u.Des, u.Arb, u.Atl, u.Mag) + (u.modPR || 0),
