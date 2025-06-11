@@ -1,7 +1,7 @@
 const { DEBUG } = require('../config.js');
 const { db, updateUserData, getUserData, getCombatState, getMoveById, getNPC, updateCombat, getUserMoves, getUserPerks } = require('../utils/db.js');
 const { npcInitialize } = require('../functions/stats.js');
-const { CombatTriggers, hasStatus, removeStatus, addStatus } = require('../functions/CombatEffects.js');
+const { CombatTriggers, hasStatus, removeStatus, addStatus, reduceStatus, getStatusDuration, addDmgTypeEffect } = require('../functions/CombatEffects.js');
 const { generateCombatImageBuffer } = require('../utils/ImageGen.js');
 const { processLootFromNPC, insertToInventory } = require('../functions/LootGen.js');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
@@ -183,12 +183,14 @@ async function processCombatAction(user, move, pr, combateId) {
     const result = resolveCombatTurn(player, npc, move, npcMove, combat.dist);
     ///////////////////////////////////
 
-
+    ///Check if the battle is over//////
     const end = result.user.PV <= 0 || result.npc.PV <= 0 || hasStatus(result.user, "FUGA") ;
     if (DEBUG) console.log(end);
     const defeat = result.user.PV <= 0 && result.npc.PV > 0;
     const draw = result.user.PV <= 0 && result.npc.PV <= 0;
     const win = result.user.PV > 0 && result.npc.PV <= 0;
+    ///////////////////////////////////
+
 
     updateCombat(combateId, {
         dist: 0,
@@ -253,15 +255,17 @@ function resolveCombatTurn(user, npc, userMove, npcMove, dist) {
 
     /*const order = (user.RE + user.modRE + Number(userMove.ModINI || 0)) >=
     (npc.RE + npc.modRE + Number(npcMove.ModINI || 0))*/
+    console.log(hasStatus(user, "STUN"));
     if (DEBUG) console.log("Move ini bonus:",userMove.INI);
-    const order = (stats.total(user, "RE") + Number(userMove.INI || 0)) >=
-    (stats.total(npc, "RE") + Number(npcMove.INI || 0)) || (userMove.EFFECT === "FUGA")
+    const playerIni = (stats.total(user, "RE") + Number(userMove.INI || 0) - (hasStatus(user, "STUN") ? Math.ceil(getStatusDuration(user, "STUN")/2) : 0 ));
+    const npcIni = (stats.total(npc, "RE") + Number(npcMove.INI || 0)  - (hasStatus(npc, "STUN") ? Math.ceil(getStatusDuration(npc, "STUN")/2) : 0 ))
+    const order = playerIni >= npcIni || (userMove.EFFECT === "FUGA")
     ? [[user, npc, userMove, npcMove], [npc, user, npcMove, userMove]]
     : [[npc, user, npcMove, userMove], [user, npc, userMove, npcMove]];
 
 
     if (DEBUG) console.log("Distância inicial:", dist);
-    if (DEBUG) console.log("Iniciativas (player/npc):"+ (stats.total(user, "RE") + Number(userMove.INI || 0)) +","+(stats.total(npc, "RE") + Number(npcMove.INI || 0)));
+    if (DEBUG) console.log("Iniciativas (player/npc):"+ (stats.total(user, "RE") + Number(userMove.INI || 0)) +"("+playerIni+") ,"+(stats.total(npc, "RE") + Number(npcMove.INI || 0)) +"("+npcIni+")");
 
     const logs = [];
 
@@ -362,12 +366,12 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
     ` usa ${move.nome}!`);
 
     /////////////////////////////////////////////////////////////////////
-    ////ATTACKER STATUS ON HIT///
+    ////ATTACKER STATUS BEFORE HIT///
     if (DEBUG) console.log('STATUS DO ATTACKER:', attacker.STATUS);
     for (const tag of tags) {
-        if (CombatTriggers.onHitBefore?.[tag]) {
+        if (CombatTriggers.onHitBefore?.[tag[0]]) {
             if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
-            const eff = CombatTriggers.onHitBefore[tag](attacker, log);
+            const eff = CombatTriggers.onHitBefore[tag[0]](attacker, log);
             if (DEBUG) console.log('RESULTADO:', eff);
             if (eff) {
                 for (const key in eff) {
@@ -378,7 +382,9 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
                         console.warn(`[⚠️ TAG TRIGGER] Falha ao aplicar '${key}':`, err.message);
                     }
                 }
-                if (eff?.consome) removeStatus(attacker, tag);
+                if (eff?.consome) {
+                    removeStatus(attacker, tag[0]);
+                }
             }
         }
     }
@@ -420,12 +426,34 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
         log.push(` **${defender.nome}** sofre **${danofinal}** de dano ${bonus.ele} ${bpRD[1]} ${bonus.ico}`);
 
         /////////////////////////////////////////
-        //MOVE EFFECTS (OU ATTACKER STATUS) ONHIT
-        /////////////////////////////////////////
+        ////////ON ACTION MOVE EFFECT////////////////////////////////
+        if (DEBUG) console.log('HIT EFFECT:', effect);
+        for (const tag of tags) {
+            if (CombatTriggers.onHitEffect?.[tag]) {
+                if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
+                const eff = CombatTriggers.onHitAfter[tag](defender, log);
+                if (DEBUG) console.log('RESULTADO:', eff);
+                if (eff) {
+                    for (const key in eff) {
+                        if (key === 'consome' || key === 'break') continue; // trata depois
+                        try {
+                            eval(`${key} += ${eff[key]}`);
+                        } catch (err) {
+                            console.warn(`[⚠️ TAG TRIGGER] Falha ao aplicar '${key}':`, err.message);
+                        }
+                    };
+                }
+            }
+        }
+        /////////////////////////////////////////////
 
         /////////////////////////////////////////
         // DEFENDER STATUS ON HIT
         if (hasStatus(defender, "FUGA")) removeStatus(defender, "FUGA"), log.push(`⚠️ **${defender.nome}** não conseguiu escapar`);
+        /////////////////////////////////////////
+        // HEAVY DAMAGE
+        if (Math.floor(danofinal >= (stats.total(defender, "RES")*3))) addDmgTypeEffect(defender, move.ELE, log, 2);
+        else if (Math.floor(danofinal >= (stats.total(defender, "RES")*2))) addDmgTypeEffect(defender, move.ELE, log);
         /////////////////////////////////////////
 
         ////Se ultrapassou EQ, perde PR
@@ -433,9 +461,7 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
             defender.PR -= 1;
             log.push(`⚠️ **${defender.nome}** se desequilibra`);
         }
-        /*if (defender.PV <= 0) {
-            log.push(`☠️ ${defender.nome} foi derrotado!`);
-        }*/
+        /////////////////////////////////////////
     } else {
         log.push(` ${attacker.nome} errou o ataque❌`);
         if (hasStatus(defender, "FUGA")) {
@@ -445,6 +471,22 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
             }
         }
     }
+    //////////////////////////////////
+    ////Apply end round effects///////
+    for (const tag of tags) {
+        if (CombatTriggers.onTurnEnd?.[tag[0]]) {
+            if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
+            CombatTriggers.onTurnEnd[tag[0]](attacker, log);
+            if (DEBUG) console.log('RESULTADO:', tag);
+        }
+    }
+    /*if (hasStatus(attacker, "POISON")) {
+        attacker.PV -= 1;
+        reduceStatus(attacker, "POISON"); // reduz 1 turno
+        log.push(`**${attacker.nome}** sofre **1** de dano vital pelo veneno! 🤢`);
+    }*/
+    ///////////////////////////////////IMPROVE LATER!!!!
+
     const cond = Math.round((100 * defender.PV) / stats.total(defender, "MPV"));
     if (DEBUG) console.log(defender.PV+" , "+cond+"%");
     extexto = cond > 99 ? `${defender.nome} está ok \n`//Exibir status effects aqui também?

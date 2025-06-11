@@ -21,9 +21,9 @@ async function generateCombatImageBuffer(userImageUrl, npcImageUrl, userDead, np
     ]);
 
     const [userImg, npcImg] = await Promise.all([
-        userDead ? sharp(Buffer.from(userBuffer)).resize(128, 128,{position: 'north'}).grayscale().toBuffer()
+        userDead ? sharp(Buffer.from(userBuffer)).resize(128, 128,{position: 'north'}).grayscale().blur().toBuffer()
         : sharp(userBuffer).resize(128, 128,{position: 'north'}).toBuffer(),
-        npcDead ? sharp(Buffer.from(npcBuffer)).resize(128, 128,{position: 'north'}).grayscale().toBuffer()
+        npcDead ? sharp(Buffer.from(npcBuffer)).resize(128, 128,{position: 'north'}).grayscale().blur().toBuffer()
         : sharp(npcBuffer).resize(128, 128,{position: 'north'}).toBuffer()
     ]);
 
