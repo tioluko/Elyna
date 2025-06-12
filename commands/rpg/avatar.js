@@ -2,15 +2,22 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 const { getUserData, updateUserData } = require('../../utils/db.js');
 const { isValidURL, checkImage } = require('../../functions/urlcheck.js');
+const { info, ava } = require('../../data/locale.js');
 
 module.exports = {
     cooldown: 5,
     data: new SlashCommandBuilder()
     .setName('avatar')
-    .setDescription('Muda a imagem do seu personagem')
+    .setDescription('Change your character image')
+    .setDescriptionLocalizations({
+        "pt-BR": "Muda a imagem do seu personagem",
+    })
     .addStringOption(option =>
     option.setName('url')
-    .setDescription('url da imagem')
+    .setDescription('Image url')
+    .setDescriptionLocalizations({
+        "pt-BR": "Url da imagem",
+    })
     .setRequired(true)
     ),
 
@@ -19,19 +26,19 @@ module.exports = {
         let url = interaction.options.getString('url');
 
         if (!user) {
-            return interaction.reply(':star: Você ainda não tem um personagem, use **/criarficha** para criar um! :star:');
+            return interaction.reply(info.no_character);
         }
-        if (!isValidURL(url)) {
-            interaction.reply(`:star: Isso nem é uma url... :star:`);
+        if (!isValidURL(url)) {  //Checa se é um url valido
+            interaction.reply(ava.invalid_url);
         } else {
             checkImage(url).then(isValidImage => {
-                if (!isValidImage) {
-                    interaction.reply(`:star: Não vejo imagem nessa url :star:`);
+                if (!isValidImage) {  //Checa se é uma imagem
+                    interaction.reply(ava.no_img);
                 } else {
                     updateUserData(user.id, { image: url });
                     //interaction.reply(`:star: Esse é o seu personagem: ${url} :star:`);
                     const embed = new EmbedBuilder()
-                    .setDescription(`:star: Esse é o visual de ${user.nome}: :star:`)
+                    .setDescription(`:star: ${ava.this_is} ${user.nome}: :star:`)
                     .setImage(url);
                     interaction.reply({ embeds: [embed] }).then(() =>
                     setTimeout(

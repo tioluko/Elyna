@@ -1,5 +1,6 @@
 const { DEBUG } = require('../config.js');
 const { total } = require('./stats');
+const { cf } = require('../data/locale.js');
 
 const CombatTriggers = {
     onTurnStart: {
@@ -20,7 +21,7 @@ const CombatTriggers = {
         },
         BLITZ: (entity, log) => {
             if (DEBUG) console.log("Blitz ativado");
-            log.push(`:star: **Blitz ativado** :star:`);
+            log.push(cf.blitz);
             return {
                 acerto: 10,
                 consome: true };
@@ -41,13 +42,13 @@ const CombatTriggers = {
             const max = +entity.MPR || 0;
             const rec = Math.floor(max / 2);
             entity.PR = Math.min(entity.PR + rec, max);
-            log.push(`**${entity.nome}** se reequilibra recuperando ${rec} PR ✨\n`);
-            return {break: true };
+            log.push(`**${entity.nome}** ${cf.rec_pr} ${rec} PR ✨`);
+            return;
         },
         FUGA: (entity, log) => {
             addStatus(entity, "FUGA");
-            log.push(`**${entity.nome}** está tentando fugir!\n`);
-            return {break: true };
+            log.push(`**${entity.nome}** ${cf.running}!`);
+            return;
         }
     },
 
@@ -58,18 +59,18 @@ const CombatTriggers = {
             const roll = r2d10();
             const result = roll.total + stat;
             if (DEBUG) console.log('.');
-            log.push(`🎲 Teste de Resistência: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
 
             if (result >= dt) {
-                log.push(`**${entity.nome}** resiste ao veneno`);
+                log.push(`**${entity.nome}** ${cf.psn_res}`);
                 return;
             }if (hasStatus(entity, "POISON")) {
                 addStatus(entity, "POISON", (1+dt-result));
-                log.push(`⚠️ O veneno em **${entity.nome}** se intensifica`);
+                log.push(`⚠️ ${cf.the_psn} **${entity.nome}** ${cf.intensifies}`);
                 return;
             }else {
                 addStatus(entity, "POISON", (1+dt-result));
-                log.push (`⚠️ **${entity.nome}** foi envenenado`);
+                log.push (`⚠️ **${entity.nome}** ${cf.is_psn}`);
                 return;
             }
         },
@@ -83,7 +84,7 @@ const CombatTriggers = {
         POISON: (entity, log) => {
             entity.PV -= 1;
             reduceStatus(entity, "POISON"); // reduz 1 turno
-            log.push(`**${entity.nome}** sofre **1** de dano vital por envenamento! 🤢`);
+            log.push(`**${entity.nome}** ${cf.tk} **1** ${cf.psn_dmg}! 🤢`);
             return;
         },
         BLEED: (entity, log) => {
@@ -91,7 +92,7 @@ const CombatTriggers = {
             console.log("bleed power:", dmg)
             entity.PV -= dmg;
             reduceStatus(entity, "BLEED"); // reduz 1 turno
-            log.push(`**${entity.nome}** sofre **${dmg}** de dano vital por sangramento! 🩸`);
+            log.push(`**${entity.nome}** ${cf.tk} **${dmg}** ${cf.bld_dmg}! 🩸`);
             return;
         }
     }

@@ -6,6 +6,7 @@ const { generateCombatImageBuffer } = require('../utils/ImageGen.js');
 const { processLootFromNPC, insertToInventory } = require('../functions/LootGen.js');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const stats = require('./stats');
+const { ce, st } = require('../data/locale.js');
 
 function createCombat(userId, npcId) {
 
@@ -222,10 +223,10 @@ async function processCombatAction(user, move, pr, combateId) {
             const lootText = formatLootSummary(loot);   // Escreve o log
 
             // loot = generateLoot(npc); // <- Loot futura aqui?
-            result.log += `\n🏆 Vitória! **${user.nome}** ganhou **${exp} XP**!`;
-            if (loot !== null) result.log += `\n📦 ${lootText} nos restos de ${npc.nome}`;
+            result.log += `\n🏆 ${ce.vic}! **${user.nome}** ${ce.got} **${exp} XP**!`;
+            if (loot !== null) result.log += `\n📦 ${lootText} ${ce.on} ${npc.nome}`;
         }
-        if (defeat || draw) {result.log += `\n⚰️ Você foi derrotado...`;}
+        if (defeat || draw) {result.log += `\n⚰️ ${ce.dft}`;}
         else {result.log += ``;}
     }
 
@@ -278,7 +279,7 @@ function resolveCombatTurn(user, npc, userMove, npcMove, dist) {
 
     for (const [actor, target, move, targetMove] of order) {
         if (target.PV <= 0) {
-            logs.push(`☠️ ${target.nome} já está derrotado, ${actor.nome} não age.`);
+            logs.push(`☠️ ${target.nome} ${ce.is_unc}, ${actor.nome} ${ce.wont_act}.`);
             continue;
         }
 
@@ -351,123 +352,125 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
         }
     }
     /////////////////////////////////////////////
+    //Checa se o move é SELF (tipo 0)
+    //e skippa tudo daqui até o endround effect
+    if (move.tipo > 0){
+        //Calculo dos valores de Acerto/Dano acordo tipo de atk e rolagems anteriores
+        const bonus = moveFormulae(attacker, dist, move);
+        acerto = rollAtk.total + rollPR + bonus.acerto;
+        dano = bonus.dano * crit;
+        movtexto = bonus.desc;
 
+        //Mostra o ataque utilizado e a forma que foi utilzada
+        if (DEBUG) console.log("BonusDefesa:"+ stats.total(defender, "RE") +"+"+ (defender[defpericia]));
+        log.push(`**${attacker.nome}** ${movtexto} `+
+        (rollPR > 0 ? ` ${ce.pr_eff}` :"")+
+        ` ${ce.use} ${move.nome}!`);
 
-    //Calculo dos valores de Acerto/Dano acordo tipo de atk e rolagems anteriores
-    const bonus = moveFormulae(attacker, dist, move);
-    acerto = rollAtk.total + rollPR + bonus.acerto;
-    dano = bonus.dano * crit;
-    movtexto = bonus.desc;
-
-    //Mostra o ataque utilizado e a forma que foi utilzada
-    if (DEBUG) console.log("BonusDefesa:"+ stats.total(defender, "RE") +"+"+ (defender[defpericia]));
-    log.push(`**${attacker.nome}** ${movtexto} `+
-    (rollPR > 0 ? ` com esforço extra` :"")+
-    ` usa ${move.nome}!`);
-
-    /////////////////////////////////////////////////////////////////////
-    ////ATTACKER STATUS BEFORE HIT///
-    if (DEBUG) console.log('STATUS DO ATTACKER:', attacker.STATUS);
-    for (const tag of tags) {
-        if (CombatTriggers.onHitBefore?.[tag[0]]) {
-            if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
-            const eff = CombatTriggers.onHitBefore[tag[0]](attacker, log);
-            if (DEBUG) console.log('RESULTADO:', eff);
-            if (eff) {
-                for (const key in eff) {
-                    if (key === 'consome') continue; // trata depois
-                    try {
-                        eval(`${key} += ${eff[key]}`);
-                    } catch (err) {
-                        console.warn(`[⚠️ TAG TRIGGER] Falha ao aplicar '${key}':`, err.message);
-                    }
-                }
-                if (eff?.consome) {
-                    removeStatus(attacker, tag[0]);
-                }
-            }
-        }
-    }
-    ////////////////////////////////////////////////////////////////////
-
-
-
-    //Mensagem do Roll de acerto
-    log.push(`🎲 Acerto: ** ${acerto} ** \u2003 *2d10* {[${rollAtk.d1}, ${rollAtk.d2}] + `+
-    (rollPR > 0 ? ` *1d10* [${rollPR}] + ` : "")+
-    `${acerto - (rollAtk.total + rollPR)}}`+
-    (crit > 1 ? ` 🔥🔥 ***CRÍTICO!!!*** 🔥🔥` : ""));
-
-    //////////////////////////////////////////////
-    //Determina a defesa total e checar se tem PR
-    const dificuldade = (defender.PR <= 0) ? defender.DEF : rollDef.total + rollRun + defesa;
-    //////////////////////////////////////
-    if (DEBUG) console.log("DEF minima:"+ defender.DEF);
-    //Mensagem do Roll de defesa
-    log.push(defender.PR <= 0
-    ? `🚫 Defesa: ** ${dificuldade} **  \u2003 *Sem Ritmo*`
-    :`🎲 Defesa: ** ${dificuldade} ** \u2003 *2d10* {[${rollDef.d1}, ${rollDef.d2}] + `+
-    (rollRun > 0 ? ` *1d10* [${rollRun}] + ` : "")+
-    `${defesa}}`);
-
-    ////Checa se acertou//////////////////////////
-    if (acerto >= dificuldade || crit > 1) {
-        // 🎯 Acertou
-
-        ////Pega a parte do corpo atingida e RD da mesma///////////////
-        const bpRD = pickBodyPart(defender); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
-        if (DEBUG) console.log("RD no" + defender[bpRD[1]] +":"+ defender[bpRD[0]]);
-
-        ////Calcula o Dano final e atualiza PV////////
-        danofinal = Math.max(Math.floor(Math.max(1,dano * [bpRD[2]])) - (defender.RD + defender[bpRD[0]] || 0),0);
-        defender.PV -= danofinal;
-
-        ////Mensagem de dano//////////////
-        log.push(` **${defender.nome}** sofre **${danofinal}** de dano ${bonus.ele} ${bpRD[1]} ${bonus.ico}`);
-
-        /////////////////////////////////////////
-        ////////ON ACTION MOVE EFFECT////////////////////////////////
-        if (DEBUG) console.log('HIT EFFECT:', effect);
+        /////////////////////////////////////////////////////////////////////
+        ////ATTACKER STATUS BEFORE HIT///
+        if (DEBUG) console.log('STATUS DO ATTACKER:', attacker.STATUS);
         for (const tag of tags) {
-            if (CombatTriggers.onHitEffect?.[tag]) {
+            if (CombatTriggers.onHitBefore?.[tag[0]]) {
                 if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
-                const eff = CombatTriggers.onHitAfter[tag](defender, log);
+                const eff = CombatTriggers.onHitBefore[tag[0]](attacker, log);
                 if (DEBUG) console.log('RESULTADO:', eff);
                 if (eff) {
                     for (const key in eff) {
-                        if (key === 'consome' || key === 'break') continue; // trata depois
+                        if (key === 'consome') continue; // trata depois
                         try {
                             eval(`${key} += ${eff[key]}`);
                         } catch (err) {
                             console.warn(`[⚠️ TAG TRIGGER] Falha ao aplicar '${key}':`, err.message);
                         }
-                    };
+                    }
+                    if (eff?.consome) {
+                        removeStatus(attacker, tag[0]);
+                    }
                 }
             }
         }
-        /////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////
 
-        /////////////////////////////////////////
-        // DEFENDER STATUS ON HIT
-        if (hasStatus(defender, "FUGA")) removeStatus(defender, "FUGA"), log.push(`⚠️ **${defender.nome}** não conseguiu escapar`);
-        /////////////////////////////////////////
-        // HEAVY DAMAGE
-        if (Math.floor(danofinal >= (stats.total(defender, "RES")*3))) addDmgTypeEffect(defender, move.ELE, log, 2);
-        else if (Math.floor(danofinal >= (stats.total(defender, "RES")*2))) addDmgTypeEffect(defender, move.ELE, log);
-        /////////////////////////////////////////
 
-        ////Se ultrapassou EQ, perde PR
-        if (Math.floor(dano * [bpRD[2]]) > defender.EQ) {
-            defender.PR -= 1;
-            log.push(`⚠️ **${defender.nome}** se desequilibra`);
-        }
-        /////////////////////////////////////////
-    } else {
-        log.push(` ${attacker.nome} errou o ataque❌`);
-        if (hasStatus(defender, "FUGA")) {
-            log.push(`\n💨 **${defender.nome} fugiu!**`);
-            return {
-                log: log.join('\n'),
+
+        //Mensagem do Roll de acerto
+        log.push(`🎲 ${ce.hit}: ** ${acerto} ** \u2003 *2d10* {[${rollAtk.d1}, ${rollAtk.d2}] + `+
+        (rollPR > 0 ? ` *1d10* [${rollPR}] + ` : "")+
+        `${acerto - (rollAtk.total + rollPR)}}`+
+        (crit > 1 ? ` 🔥🔥 ***${ce.crit}!!!*** 🔥🔥` : ""));
+
+        //////////////////////////////////////////////
+        //Determina a defesa total e checar se tem PR
+        const dificuldade = (defender.PR <= 0) ? defender.DEF : rollDef.total + rollRun + defesa;
+        //////////////////////////////////////
+        if (DEBUG) console.log("DEF minima:"+ defender.DEF);
+        //Mensagem do Roll de defesa
+        log.push(defender.PR <= 0
+        ? `🚫 ${ce.def}: ** ${dificuldade} **  \u2003 *${ce.no_pr}*`
+        :`🎲 ${ce.def}: ** ${dificuldade} ** \u2003 *2d10* {[${rollDef.d1}, ${rollDef.d2}] + `+
+        (rollRun > 0 ? ` *1d10* [${rollRun}] + ` : "")+
+        `${defesa}}`);
+
+        ////Checa se acertou//////////////////////////
+        if (acerto >= dificuldade || crit > 1) {
+            // 🎯 Acertou
+
+            ////Pega a parte do corpo atingida e RD da mesma///////////////
+            const bpRD = pickBodyPart(defender); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
+            if (DEBUG) console.log("RD no" + defender[bpRD[1]] +":"+ defender[bpRD[0]]);
+
+            ////Calcula o Dano final e atualiza PV////////
+            danofinal = Math.max(Math.floor(Math.max(1,dano * [bpRD[2]])) - (defender.RD + defender[bpRD[0]] || 0),0);
+            defender.PV -= danofinal;
+
+            ////Mensagem de dano//////////////
+            log.push(` **${defender.nome}** ${ce.tk} **${danofinal}** ${bonus.ele} ${bpRD[1]} ${bonus.ico}`);
+
+            /////////////////////////////////////////
+            ////////ON ACTION MOVE EFFECT////////////////////////////////
+            if (DEBUG) console.log('HIT EFFECT:', effect);
+            for (const tag of tags) {
+                if (CombatTriggers.onHitEffect?.[tag]) {
+                    if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
+                    const eff = CombatTriggers.onHitAfter[tag](defender, log);
+                    if (DEBUG) console.log('RESULTADO:', eff);
+                    if (eff) {
+                        for (const key in eff) {
+                            if (key === 'consome' || key === 'break') continue; // trata depois
+                            try {
+                                eval(`${key} += ${eff[key]}`);
+                            } catch (err) {
+                                console.warn(`[⚠️ TAG TRIGGER] Falha ao aplicar '${key}':`, err.message);
+                            }
+                        };
+                    }
+                }
+            }
+            /////////////////////////////////////////////
+
+            /////////////////////////////////////////
+            // DEFENDER STATUS ON HIT
+            if (hasStatus(defender, "FUGA")) removeStatus(defender, "FUGA"), log.push(`⚠️ **${defender.nome}** ${ce.runfail}`);
+            /////////////////////////////////////////
+            // HEAVY DAMAGE
+            if (Math.floor(danofinal >= (stats.total(defender, "RES")*3))) addDmgTypeEffect(defender, move.ELE, log, 2);
+            else if (Math.floor(danofinal >= (stats.total(defender, "RES")*2))) addDmgTypeEffect(defender, move.ELE, log);
+            /////////////////////////////////////////
+
+            ////Se ultrapassou EQ, perde PR
+            if (Math.floor(dano * [bpRD[2]]) > defender.EQ) {
+                defender.PR -= 1;
+                log.push(`⚠️ **${defender.nome}** ${ce.bal}`);
+            }
+            /////////////////////////////////////////
+        } else {
+            log.push(` ${attacker.nome} ${ce.miss}❌`);
+            if (hasStatus(defender, "FUGA")) {
+                log.push(`\n💨 **${defender.nome} ${ce.run}!**`);
+                return {
+                    log: log.join('\n'),
+                }
             }
         }
     }
@@ -480,22 +483,22 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
             if (DEBUG) console.log('RESULTADO:', tag);
         }
     }
-    /*if (hasStatus(attacker, "POISON")) {
-        attacker.PV -= 1;
-        reduceStatus(attacker, "POISON"); // reduz 1 turno
-        log.push(`**${attacker.nome}** sofre **1** de dano vital pelo veneno! 🤢`);
-    }*/
-    ///////////////////////////////////IMPROVE LATER!!!!
+    ///////////////////////////////////
 
     const cond = Math.round((100 * defender.PV) / stats.total(defender, "MPV"));
     if (DEBUG) console.log(defender.PV+" , "+cond+"%");
-    extexto = cond > 99 ? `${defender.nome} está ok \n`//Exibir status effects aqui também?
+    /*extexto = cond > 99 ? `${defender.nome} está ok \n`//Exibir status effects aqui também?
     : cond > 75 ? `${defender.nome} está levemente ferido \n`
     : cond > 50 ? `${defender.nome} está ferido \n`
     : cond > 25 ? `${defender.nome} está muito ferido \n`
     : cond > 0 ? `${defender.nome} está á beira da morte \n`
     : `💀 ${defender.nome} está inconsciente! \n`;
     log.push(extexto);
+    ^Isso era legal, mas como tem barras de vida fica meio redundante*/
+
+    if (defender.PV <= 0) log.push(`💀 ${defender.nome} ${ce.is_unc}!`);
+    if (attacker.PV <= 0) log.push(`💀 ${attacker.nome} ${ce.is_unc}!`);
+    log.push('\u200B');
     if (DEBUG) console.log("---");
 
     return {
@@ -534,10 +537,10 @@ function moveFormulae(a, d, m ) {
             Alc: Mod*/
             acerto = m.AC + ag + a[m.pericia] + Math.floor(Math.min((m.ALC + dd),dd/2));
             dano = m.DN + fo + Math.max(0, Math.floor(Math.min(mv + d, mv) / 2));
-            desc =    d < 0 ? "se mantendo bem próximo,"
-            : d === 0 ? "se aproxima e"
-            : d < 3 ? "tenta se aproximar e"
-            : "mal conseguindo acompanhar,";
+            desc =    d < 0 ? ce.c0
+            : d === 0 ? ce.c1
+            : d < 3 ? ce.c2
+            : ce.c3;
 
             if (DEBUG) console.log("BonusAcerto:" + m.AC +"+"+ ag +"+"+ a[m.pericia] +"+"+ Math.floor(Math.min((m.ALC + dd),dd/2))+
             " Base Dano:"+ m.DN +"+"+ fo +"+"+  Math.max(0, Math.floor(Math.min(mv + d, mv) / 2)) + " CritMod:" +m.DNCRI);
@@ -548,10 +551,10 @@ function moveFormulae(a, d, m ) {
             Alc: Mod+For*/
             acerto = m.AC + ag + a[m.pericia] - Math.floor(Math.max((d - m.ALC), 0) / (it || 1));
             dano = m.DN + fo - Math.max(0, d - (m.ALC + fo));
-            desc =    d < 0 ? "não conseguindo se afastar,"
-            : d === 0 ? "tenta recuar e"
-            : d < 3 ? "recua e"
-            : "recua bastante e";
+            desc =    d < 0 ? ce.r0
+            : d === 0 ? ce.r1
+            : d < 3 ? ce.r2
+            : ce.r3;
 
             if (DEBUG) console.log("Bonus Acerto:" + m.AC +"+"+ ag +"+"+ a[m.pericia] +"-"+ Math.floor(Math.max((d - m.ALC), 0) / (it || 1))+
             " Base Dano:"+ m.DN +"+"+ fo +"+"+  Math.max(0, d - (m.ALC + fo)) + " CritMod: " + m.DNCRI + " Alc:" + m.ALC +" Dist:"+ d);
@@ -562,10 +565,10 @@ function moveFormulae(a, d, m ) {
             Alc: Mod*/
             acerto = m.AC + ag + a[m.pericia] - Math.floor(Math.max((d - m.ALC), 0) / (it || 1));
             dano = m.DN;
-            desc =    d < 0 ? "não conseguindo se afastar,"
-            : d === 0 ? "tenta recuar e"
-            : d < 3 ? "recua e"
-            : "recua bastante e";
+            desc =    d < 0 ? ce.r0
+            : d === 0 ? ce.r1
+            : d < 3 ? ce.r2
+            : ce.r3;
 
             if (DEBUG) console.log("Bonus Acerto:" + m.AC +"+"+ ag +"+"+ a[m.pericia] +"-"+ Math.floor(Math.max((d - m.ALC), 0) / (it || 1))+
             " Base Dano:"+ m.DN+ " CritMod: " + m.DNCRI + " Alc:" + m.ALC +" Dist:"+ d);
@@ -583,14 +586,14 @@ function moveFormulae(a, d, m ) {
             break;
     }
     switch(m.ELE){
-        case "ct": return {acerto , dano , desc, ele: "contundente", ico: "💥"};
-        case "cr": return {acerto , dano , desc, ele: "cortante", ico: "💥"};
-        case "pn": return {acerto , dano , desc, ele: "penetrante", ico: "💥"};
-        case "ch": return {acerto , dano , desc, ele: "chocante", ico: "⚡"};
-        case "cg": return {acerto , dano , desc, ele: "congelante", ico: "❄️"};
-        case "qm": return {acerto , dano , desc, ele: "queimante", ico: "🔥"};
-        case "vt": return {acerto , dano , desc, ele: "vital", ico: "💗"};
-        case "ep": return {acerto , dano , desc, ele: "especial", ico: "💠"};
+        case "ct": return {acerto , dano , desc, ele: st.ctdmg, ico: "💥"};
+        case "cr": return {acerto , dano , desc, ele: st.crdmg, ico: "💥"};
+        case "pn": return {acerto , dano , desc, ele: st.pndmg, ico: "💥"};
+        case "ch": return {acerto , dano , desc, ele: st.chdmg, ico: "⚡"};
+        case "cg": return {acerto , dano , desc, ele: st.cgdmg, ico: "❄️"};
+        case "qm": return {acerto , dano , desc, ele: st.qmdmg, ico: "🔥"};
+        case "vt": return {acerto , dano , desc, ele: st.vtdmg, ico: "💗"};
+        case "ep": return {acerto , dano , desc, ele: st.epdmg, ico: "💠"};
     }
     return { acerto , dano , desc };
 }
@@ -627,3 +630,5 @@ function formatLootSummary(loot) {
 
 
 module.exports = { createCombat, chooseNpcAction, processCombatAction, resolveAttack, roll2d10 };
+
+

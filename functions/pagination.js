@@ -79,7 +79,11 @@ module.exports = async (interaction, pages, time = 30 * 1000) => {
 
     collector.on("end", async () => {
       //await msg.edit({ embeds: [pages[index]], components: [] }).catch(err => {});
-      await msg.delete();
+      try {
+        await msg.delete();
+      } catch (err) {
+        if (err.code !== 10008) throw err; // ignora "Unknown Message"
+      }
     });
 
     return msg;

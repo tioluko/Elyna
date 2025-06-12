@@ -4,30 +4,37 @@ const { getUserData, getUserMoves, getCombatState, updateCombat, updateCombatUse
 const { processCombatAction } = require('../../functions/CombatEvent');
 const { processNarrativeAction } = require('../../functions/NarrativeEvent');
 const stats = require('../../functions/stats');
+const { info, act } = require('../../data/locale.js');
 
 module.exports = {
     //cooldown: 5,
     data: new SlashCommandBuilder()
-    .setName('ação')
-    .setDescription('Escolha sua ação para um evento ou combate')
+    .setName('act')
+    .setDescription('Choose a combat/event action')
+    .setNameLocalizations({ "pt-BR": "ação", })
+    .setDescriptionLocalizations({ "pt-BR": "Escolha sua ação para um evento ou combate", })
     .addStringOption(option =>
     option.setName('action')
-    .setDescription('Ação')
+    .setDescription('Action')
+    .setDescriptionLocalizations({ "pt-BR": "Ação", })
     .setRequired(true)
     .setAutocomplete(true)
      )
     .addBooleanOption(option =>
-    option.setName('pr')
-    .setDescription('Consumir Ponto de Ritmo pra somar 1d10 no teste dessa ação?')
+    option.setName('rp')
+    .setDescription('Pay a Rythm Point to add an extra d10 to your next roll?')
+    .setNameLocalizations({ "pt-BR": "pr", })
+    .setDescriptionLocalizations({ "pt-BR": "Consumir Ponto de Ritmo pra somar 1d10 no teste dessa ação?", })
      ),
 
     async autocomplete(interaction) {
         const user = getUserData(interaction.user.id);
+        if (DEBUG) console.log("running autocomplete for", interaction.user.id);
         function blockAutocomplete(message) {
             return [{ name: `🚫 ${message}`, value:'__BLOCK__'}];
         }
-        if (!user) return interaction.respond(blockAutocomplete('Você ainda não tem um personagem, use /criarficha para criar um!'));
-        if (user.EVENT === 'none') return interaction.respond(blockAutocomplete('Você não está em nenhum evento que requer ação'));
+        if (!user) return interaction.respond(blockAutocomplete(act.no_char));
+        if (user.EVENT === 'none') return interaction.respond(blockAutocomplete(act.on_event));
 
         const focused = interaction.options.getFocused();
         const userId = interaction.user.id;
@@ -56,10 +63,10 @@ module.exports = {
         const user = getUserData(interaction.user.id);
         const id = interaction.options.getString('action');
         if (!id || id.startsWith('__BLOCK')) {
-            return interaction.reply({ content: 'Opção inválida.', ephemeral: true });
+            return interaction.reply({ content: act.inv_opt, ephemeral: true });
         }
         const evento = user.EVENT;
-        const pr = interaction.options.getBoolean('pr');
+        const pr = interaction.options.getBoolean('rp');
         //const selected = interaction.options.getString('action');
 
         if (evento.startsWith('combate:')) {
@@ -76,7 +83,7 @@ module.exports = {
             const can_use = stats.handleSkillCost(player, selected, pr);
             if (DEBUG) console.log("PM/PR antes>",player.PM, player.PR, can_use);
             if (!can_use){
-                return interaction.reply(`:star: Aw, parece que você não pode pagar o custo dessa ação... :star:`);
+                return interaction.reply(act.cant_pay);
             }
 
             updateCombatUserData(combat.id, player);
@@ -94,7 +101,7 @@ module.exports = {
         if (evento.startsWith('evento:')) {
             // Evento narrativo
             if (pr) {
-                return interaction.reply(`:star: Você não pode usar Ponto de Ritmo fora de combate. :star:`);
+                return interaction.reply(act.no_combat_pr);
             }
             const result = await processNarrativeAction(user, selected);
             return interaction.reply(result);
