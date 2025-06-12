@@ -142,65 +142,77 @@ function removeStatus(entity, tag) {
     entity.STATUS = JSON.stringify(filtered);
 }
 /*
- c o*rtante > sangramento
- penetrante > sangramento
- contundente > atordoamento
- chocante > paralisia
- queimante > exaustão
- congelante > paralisia
- vital > enjoo
-
- sangramento x > x dano ao agir
- incendiado x > x dano ao agir
- atordoamento x > -x*2 em ini x em acerto
- exaustão x > -x em acerto e mov
- paralisia x > -x em reação e mov
- enjoo x > -x em acerto e reação
+ * c o*rtante > sangramento
+ * penetrante > sangramento
+ * contundente > atordoamento
+ * chocante > paralisia
+ * queimante > exaustão
+ * congelante > paralisia
+ * vital > enjoo
+ *
+ * sangramento x > x dano ao agir
+ * incendiado x > x dano ao agir
+ * atordoamento x > -x*2 em ini x em acerto
+ * exaustão x > -x em acerto e mov
+ * paralisia x > -x em reação e mov
+ * enjoo x > -x em acerto e reação
  */
 function addDmgTypeEffect (entity, ele, log, pow = 1 ){
     switch (ele) {
         case "ct": {
+            log.push (`⚠️ **${entity.nome}** ${cf.is_stn}`+ (hasStatus(entity, "STUN") ? ` ${cf.harder}` : ""));
             addStatus(entity, "STUN", (3*pow));
-            log.push (`⚠️ **${entity.nome}** foi atordoado`);
             return;
         }case "cr": {
-            log.push (`⚠️ **${entity.nome}** está sangrando`+ (hasStatus(entity, "BLEED") ? ` ainda mais` : ""));
+            log.push (`⚠️ **${entity.nome}** ${cf.is_bld}`+ (hasStatus(entity, "BLEED") ? ` ${cf.more}` : ""));
             addStatus(entity, "BLEED", (5*pow));
             return;
         }case "pn": {
-            log.push (`⚠️ **${entity.nome}** está sangrando`+ (hasStatus(entity, "BLEED") ? ` ainda mais` : ""));
+            log.push (`⚠️ **${entity.nome}** ${cf.is_bld}`+ (hasStatus(entity, "BLEED") ? ` ${cf.more}` : ""));
             addStatus(entity, "BLEED", (5*pow));
             return;
-        }case "ch": log.push (`⚠️ **${entity.nome}** está sob paralisia`);
-        case "cg": log.push (`⚠️ **${entity.nome}** está sob paralisia`);
-        case "qm": log.push (`⚠️ **${entity.nome}** está em chamas`);
-        case "vt": log.push (`⚠️ **${entity.nome}** está com náuseas`);
-        case "ep": return;
+        }case "ch": {
+            log.push (`⚠️ **${entity.nome}** ${cf.is_plz}`+ (hasStatus(entity, "PARALZ") ? ` ${cf.harder}` : ""));
+            addStatus(entity, "PARALZ", (5*pow));
+            return;
+        }case "cg": {
+            log.push (`⚠️ **${entity.nome}** ${cf.is_plz}`+ (hasStatus(entity, "PARALZ") ? ` ${cf.harder}` : ""));
+            addStatus(entity, "PARALZ", (5*pow));
+            return;
+        }case "qm": {
+            log.push (`⚠️ **${entity.nome}** ${cf.is_brn}`+ (hasStatus(entity, "BURN") ? ` ${cf.more}` : ""));
+            addStatus(entity, "BURN", (5*pow));
+            return;
+        }case "vt": {
+            log.push (`⚠️ **${entity.nome}** ${cf.is_nau}`+ (hasStatus(entity, "NAUSEA") ? ` ${cf.harder}` : ""));
+            addStatus(entity, "NAUSEA", (5*pow));
+            return;
+        }case "ep": return;
     }
 }
 /*function hasStatus(entity, tag) {
-    const status = JSON.parse(entity.STATUS || '[]');
-    return status.includes(tag);
-}
-
-function addStatus(entity, tag) {
-    const status = new Set(JSON.parse(entity.STATUS || '[]'));
-    status.add(tag);
-    entity.STATUS = JSON.stringify([...status]);
-}
-
-function removeStatus(entity, tag) {
-    const status = new Set(JSON.parse(entity.STATUS || '[]'));
-    status.delete(tag);
-    entity.STATUS = JSON.stringify([...status]);
-}*/
+ *    const status = JSON.parse(entity.STATUS || '[]');
+ *    return status.includes(tag);
+ * }
+ *
+ * function addStatus(entity, tag) {
+ *    const status = new Set(JSON.parse(entity.STATUS || '[]'));
+ *    status.add(tag);
+ *    entity.STATUS = JSON.stringify([...status]);
+ * }
+ *
+ * function removeStatus(entity, tag) {
+ *    const status = new Set(JSON.parse(entity.STATUS || '[]'));
+ *    status.delete(tag);
+ *    entity.STATUS = JSON.stringify([...status]);
+ * }*/
 
 function r2d10() {
     let d1 = Math.floor(Math.random() * 10) + 1;
     let d2 = Math.floor(Math.random() * 10) + 1;
     let total = d1+d2
     if (DEBUG) console.log("roll result:"+ d1+ ","+d2+"("+total+")")
-    return { d1, d2, total };
+        return { d1, d2, total };
 }
 
 module.exports = { CombatTriggers, hasStatus, addStatus, removeStatus, reduceStatus, getStatusDuration, addDmgTypeEffect };

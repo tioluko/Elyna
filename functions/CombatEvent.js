@@ -6,7 +6,7 @@ const { generateCombatImageBuffer } = require('../utils/ImageGen.js');
 const { processLootFromNPC, insertToInventory } = require('../functions/LootGen.js');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const stats = require('./stats');
-const { ce, st } = require('../data/locale.js');
+const { ce, st, cf } = require('../data/locale.js');
 
 function createCombat(userId, npcId) {
 

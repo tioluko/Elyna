@@ -4,8 +4,10 @@ const stats = require('../../functions/stats.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-    .setName('aventura')
-    .setDescription('Procura treta'),
+    .setName('adventure')
+    .setDescription('Look for trouble')
+    .setNameLocalizations({ "pt-BR": "aventura", })
+    .setDescriptionLocalizations({ "pt-BR": "Procura treta", }),
 
     async execute(interaction) {
         const user = getUserData(interaction.user.id);

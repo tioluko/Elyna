@@ -3,27 +3,29 @@ const stats = require("../../functions/stats.js");
 const { getUserData, updateUserData } = require("../../utils/db.js");
 const { info, st, pp } = require("../../data/locale.js");
 
-const perkChoices = [
-  { name: st.adf, value: "Adf" },
-  { name: st.arq, value: "Arq" },
-  { name: st.des, value: "Des" },
-  { name: st.arb, value: "Arb" },
-  { name: st.atl, value: "Atl" },
-  { name: st.art, value: "Art" },
-  { name: st.bio, value: "Bio" },
-  { name: st.exa, value: "Exa" },
-  { name: st.hum, value: "Hum" },
-  { name: st.ocu, value: "Ocu" },
-  { name: st.eng, value: "Eng" },
-  { name: st.inf, value: "Inf" },
-  { name: st.ifm, value: "Ifm" },
-  { name: st.inv, value: "Inv" },
-  { name: st.mag, value: "Mag" },
-  { name: st.med, value: "Med" },
-  { name: st.pol, value: "Pol" },
-  { name: st.sub, value: "Sub" },
-  { name: st.vei, value: "Vei" },
-];
+function buildSkillChoices(st) {
+  return [
+    { name: st.adf, value: "Adf" },
+    { name: st.arq, value: "Arq" },
+    { name: st.des, value: "Des" },
+    { name: st.arb, value: "Arb" },
+    { name: st.atl, value: "Atl" },
+    { name: st.art, value: "Art" },
+    { name: st.bio, value: "Bio" },
+    { name: st.exa, value: "Exa" },
+    { name: st.hum, value: "Hum" },
+    { name: st.ocu, value: "Ocu" },
+    { name: st.eng, value: "Eng" },
+    { name: st.inf, value: "Inf" },
+    { name: st.ifm, value: "Ifm" },
+    { name: st.inv, value: "Inv" },
+    { name: st.mag, value: "Mag" },
+    { name: st.med, value: "Med" },
+    { name: st.pol, value: "Pol" },
+    { name: st.sub, value: "Sub" },
+    { name: st.vei, value: "Vei" },
+  ];
+}
 
 module.exports = {
   cooldown: 5,
@@ -44,7 +46,7 @@ module.exports = {
           "pt-BR": "Cada ponto em Perícia custa 3 PPs",
         })
         .setRequired(true)
-        .addChoices(...perkChoices),
+        //.addChoices(...perkChoices),
     )
     .addIntegerOption((option) =>
       option
@@ -58,10 +60,15 @@ module.exports = {
         }),
     ),
 
+    async autocomplete(interaction) {
+      await interaction.respond(buildSkillChoices(st).slice(0, 25));
+    },
+
   async execute(interaction) {
     const user = getUserData(interaction.user.id);
+    const skillChoices = buildSkillChoices(st);
     let choice = interaction.options.getString("skill");
-    let choicename = perkChoices.find((attr) => attr.value === choice)?.name; //I need that because Discord.js wont let me pick an option choice name directly u.u
+    let choicename = skillChoices.find((attr) => attr.value === choice)?.name; //I need that because Discord.js wont let me pick an option choice name directly u.u
     let multi = interaction.options.getInteger("multi") ?? 1;
 
     if (!user) {

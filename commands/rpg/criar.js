@@ -24,9 +24,6 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      /*if (userExists(interaction.user.id)) {
-                return interaction.reply(':star: Você já tem um personagem! :star:');
-            }*/
       const userId = interaction.user.id;
 
       if (userExists(userId)) {

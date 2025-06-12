@@ -1,15 +1,18 @@
 const { SlashCommandBuilder } = require('discord.js');
-
 const { getUserData, updateUserData } = require('../../utils/db.js');
+const { info } = require('../data/locale.js');
 
 module.exports = {
     cooldown: 5,
     data: new SlashCommandBuilder()
-    .setName('nome')
-    .setDescription('Muda o nome do seu personagem')
+    .setName('name')
+    .setDescription('Change the name of your character')
+    .setNameLocalizations({"pt-BR": "nome",})
+    .setDescriptionLocalizations({"pt-BR": "Muda o nome do seu personagem",})
     .addStringOption(option =>
     option.setName('nome')
-    .setDescription('novo nome')
+    .setDescription('new name')
+    .setDescriptionLocalizations({"pt-BR": "novo nome",})
     .setRequired(true)
     ),
 
@@ -22,9 +25,6 @@ module.exports = {
         }
         updateUserData(user.id, { nome: nome });
 
-        //const update = {nome: nome};
-        // Atualiza os valores derivados
-        //updateUserData(user.id, update);
         interaction.reply(`:star: O nome do seu personagem é **${nome}** :star:`);
     }
 }
