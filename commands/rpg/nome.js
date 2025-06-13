@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { getUserData, updateUserData } = require('../../utils/db.js');
-const { info } = require('../data/locale.js');
+const { info } = require('../../data/locale.js');
 
 module.exports = {
     cooldown: 5,

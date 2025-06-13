@@ -37,7 +37,7 @@ function createCombat(userId, npcId) {
     const npcBase = db.prepare('SELECT * FROM npcs WHERE id = ?').get(npcId);
     // Clona NPC com update de stats
     const npcClone = { ...npcBase };
-    npcClone.STATUS = user.STATUS;
+    npcClone.STATUS = npc.STATUS;
 
     const derived = npcInitialize(npcClone);
 
@@ -357,7 +357,8 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
     if (move.tipo > 0){
         //Calculo dos valores de Acerto/Dano acordo tipo de atk e rolagems anteriores
         const bonus = moveFormulae(attacker, dist, move);
-        acerto = rollAtk.total + rollPR + bonus.acerto;
+        if (DEBUG) console.log("Flying opponent?"+ getStatusDuration(defender, "FLY"));
+        acerto = rollAtk.total + rollPR + bonus.acerto - (move.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
         dano = bonus.dano * crit;
         movtexto = bonus.desc;
 
@@ -428,12 +429,12 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
             log.push(` **${defender.nome}** ${ce.tk} **${danofinal}** ${bonus.ele} ${bpRD[1]} ${bonus.ico}`);
 
             /////////////////////////////////////////
-            ////////ON ACTION MOVE EFFECT////////////////////////////////
+            ////////ON HIT MOVE EFFECT////////////////////////////////
             if (DEBUG) console.log('HIT EFFECT:', effect);
             for (const tag of tags) {
                 if (CombatTriggers.onHitEffect?.[tag]) {
                     if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
-                    const eff = CombatTriggers.onHitAfter[tag](defender, log);
+                    const eff = CombatTriggers.onHitEffect[tag](defender, log);
                     if (DEBUG) console.log('RESULTADO:', eff);
                     if (eff) {
                         for (const key in eff) {

@@ -41,7 +41,7 @@ function updateUserData(id, updates) {
 
 // Cria listas padrões do usuário
 function initUserMoves(userId) {
-    const defaultMoves = [96,97,99]; // IDs dos ataques básicos
+    const defaultMoves = [96,97,98,99]; // IDs dos ataques básicos
     const stmt = db.prepare(`INSERT INTO user_moves (user_id, move_id) VALUES (?, ?)`);
     for (const moveId of defaultMoves) {
         stmt.run(userId, moveId);

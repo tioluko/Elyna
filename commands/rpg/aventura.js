@@ -11,7 +11,7 @@ module.exports = {
 
     async execute(interaction) {
         const user = getUserData(interaction.user.id);
-        let npcId = 0;
+        //let npcId = 0;
         function getRandomInt(min, max) {
             const minCeiled = Math.ceil(min);
             const maxFloored = Math.floor(max);
@@ -26,14 +26,19 @@ module.exports = {
             return interaction.reply(`:star: Voce ja está em combate, use o comando **/ação** lutar! :star:`);
         }
         stats.fullheal(user);
-        if (user.NV === 1) {npcId = getRandomInt(2,3)}
-        else if (user.NV === 2) {npcId = getRandomInt(2,6)}
-        else {npcId = getRandomInt(4,6)}
+        let nivel = 0
+        if (user.NV === 1) {nivel = 1}
+        else if (user.NV === 2) {nivel = (getRandomInt(1,2))}
+        else {nivel = (getRandomInt(2,3))}
 
+        const stmt = db.prepare('SELECT * FROM npcs WHERE NV = ? ORDER BY RANDOM() LIMIT 1');
+        const npc = stmt.get(nivel);
+        const npcId = parseInt(npc.id);
         const { createCombat } = require('../../functions/CombatEvent.js');
+
         try {
-            const combateId = createCombat(interaction.user.id, parseInt(npcId));
-            const npc = db.prepare('SELECT * FROM npcs WHERE id = ?').get(npcId);
+            const combateId = createCombat(interaction.user.id, npcId);
+            //const npc = db.prepare('SELECT * FROM npcs WHERE id = ?').get(npcId);
             if (!npc) throw new Error('NPC não encontrado');
             return interaction.reply(`Combate iniciado contra um ${npc.nome}, use /ação para agir`);
         } catch (e) {
