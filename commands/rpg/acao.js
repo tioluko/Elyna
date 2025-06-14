@@ -5,6 +5,7 @@ const { processCombatAction } = require('../../functions/CombatEvent');
 const { processNarrativeAction } = require('../../functions/NarrativeEvent');
 const stats = require('../../functions/stats');
 const { info, act } = require('../../data/locale.js');
+const lastCombatMessages = new Map();
 
 module.exports = {
     //cooldown: 5,
@@ -91,11 +92,36 @@ module.exports = {
             if (DEBUG) console.log("pr usado?",pr);
 
             await interaction.deferReply();
-            //await interaction.editReply('⌛ Processando ação...');
             const result = await processCombatAction(player, selected, pr, combateId);
+
+            //////Solução temporaria pra evitar o spam.
+            const lastMsgId = lastCombatMessages.get(player.id);
+            let updated = false;
+            if (lastMsgId) {
+                try {
+                    const msg = await interaction.channel.messages.fetch(lastMsgId);
+                    if (msg) {
+                        await msg.edit(result); // result = { embeds, files }
+                        updated = true;
+                    }
+                } catch (err) {
+                    console.warn(`Falha ao editar mensagem antiga: ${err.message}`);
+                }
+            }
+            if (!updated) {
+                const sent = await interaction.editReply(result);
+                lastCombatMessages.set(player.id, sent.id);
+            } else {
+                // Finaliza a interação de forma silenciosa
+                await interaction.deleteReply();
+            }
+
+            ///////////////////////////////////////
+
             //return interaction.editReply(result);
             //return interaction.editReply(result);
-            return result;
+            //await interaction.editReply(result);
+            //return result;
         }
 
         if (evento.startsWith('evento:')) {

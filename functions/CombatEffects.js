@@ -64,13 +64,9 @@ const CombatTriggers = {
             if (result >= dt) {
                 log.push(`**${entity.nome}** ${cf.psn_res}`);
                 return;
-            }if (hasStatus(entity, "POISON")) {
-                addStatus(entity, "POISON", (1+dt-result));
-                log.push(`⚠️ ${cf.the_psn} **${entity.nome}** ${cf.intensifies}`);
-                return;
             }else {
                 addStatus(entity, "POISON", (1+dt-result));
-                log.push (`⚠️ **${entity.nome}** ${cf.is_psn}`);
+                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "POISON") ? `${cf.add_psn}` : `${cf.is_psn}`));
                 return;
             }
         },
@@ -160,31 +156,31 @@ function removeStatus(entity, tag) {
 function addDmgTypeEffect (entity, ele, log, pow = 1 ){
     switch (ele) {
         case "ct": {
-            log.push (`⚠️ **${entity.nome}** ${cf.is_stn}`+ (hasStatus(entity, "STUN") ? ` ${cf.harder}` : ""));
+            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "STUN") ? `${cf.add_stn}` : `${cf.is_stn}`));
             addStatus(entity, "STUN", (3*pow));
             return;
         }case "cr": {
-            log.push (`⚠️ **${entity.nome}** ${cf.is_bld}`+ (hasStatus(entity, "BLEED") ? ` ${cf.more}` : ""));
+            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
             addStatus(entity, "BLEED", (5*pow));
             return;
         }case "pn": {
-            log.push (`⚠️ **${entity.nome}** ${cf.is_bld}`+ (hasStatus(entity, "BLEED") ? ` ${cf.more}` : ""));
+            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
             addStatus(entity, "BLEED", (5*pow));
             return;
         }case "ch": {
-            log.push (`⚠️ **${entity.nome}** ${cf.is_plz}`+ (hasStatus(entity, "PARALZ") ? ` ${cf.harder}` : ""));
+            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
             addStatus(entity, "PARALZ", (5*pow));
             return;
         }case "cg": {
-            log.push (`⚠️ **${entity.nome}** ${cf.is_plz}`+ (hasStatus(entity, "PARALZ") ? ` ${cf.harder}` : ""));
+            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
             addStatus(entity, "PARALZ", (5*pow));
             return;
         }case "qm": {
-            log.push (`⚠️ **${entity.nome}** ${cf.is_brn}`+ (hasStatus(entity, "BURN") ? ` ${cf.more}` : ""));
+            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BURN") ? `${cf.add_brn}` : `${cf.is_brn}`));
             addStatus(entity, "BURN", (5*pow));
             return;
         }case "vt": {
-            log.push (`⚠️ **${entity.nome}** ${cf.is_nau}`+ (hasStatus(entity, "NAUSEA") ? ` ${cf.harder}` : ""));
+            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "NAUSEA") ? `${cf.add_nau}` : `${cf.is_nau}`));
             addStatus(entity, "NAUSEA", (5*pow));
             return;
         }case "ep": return;

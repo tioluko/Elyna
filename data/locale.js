@@ -6,7 +6,7 @@ const info = {
     //Respostas padrões
     has_character: `:star: You already have a character! :star:`,
     no_character: `:star: You don't have a character yet, use **/newcharacter** to make one! :star:`,
-    character_created: `:star: Rejoice, your character is born! :star:\n\nYou can now use the following commands to customize it:\n**/name** Change your name.\n**/avatar** Change your image.\n**/cp** Invest your character points (CPs)\n**/pp** Invest your skill points (PPs)\n**/profile** Display your entire character sheet`,
+    character_created: `:star: Rejoice, your character is born! :star:\n\nYou can now use the following commands to customize it:\n**/name** Change your name.\n**/avatar** Change your image.\n**/bp** Invest your character points (BPs)\n**/pp** Invest your skill points (PPs)\n**/profile** Display your entire character sheet`,
     set_name: `Your character name is`,
 
     //Mensagens de erro erro bug etc
@@ -15,9 +15,9 @@ const info = {
     _command_error_: `❌ Error executing the command.`,
 };
 const pc = {
-    pc_menu: `This is your CP distribution menu`,
+    pc_menu: `This is your BP distribution menu`,
     wrong_menu: `:star: This menu isn't for you buddy... :star:`,
-    pcs: `Available CPs`,
+    pcs: `Available BPs`,
 };
 const pp = {
     nopp_1: `This costs`,
@@ -63,7 +63,7 @@ const ficha = {
 const st = {
     //terms
     nv: "Level",
-    pc: "CP",
+    pc: "BP",
     pp: "PP",
     hp: "HP",
     mp: "MP",
@@ -168,8 +168,12 @@ const cf = {
     is_plz: `is paralyzed`,
     is_nau: `is nauseated`,
     tk: `takes`,
-    more: `even more`,
-    harder: `harder`,
+    add_psn: `is further poisoned`,
+    add_bld: `is bleeding even more`,
+    add_brn: `is on more fire`,
+    add_stn: `is stunned harder`,
+    add_plz: `is paralyzed harder`,
+    add_nau: `is further nauseated`,
     psn_dmg: `poison damage`,
     bld_dmg: `bleed damage`,
     brn_dmg: `flame damage`

@@ -96,14 +96,14 @@ function pickBodyPart(u) {
     const rand = filtered[Math.floor(Math.random() * filtered.length)];
     if (DEBUG) console.log(filtered);
     switch (rand) {
-        case "cb": return [ "RD"+rand , "na cabeça", 2];
-        case "tr": return [ "RD"+rand , "no tronco", 1];
-        case "bd": return [ "RD"+rand , "no braço direito", 0.5];
-        case "be": return [ "RD"+rand , "no braço esquerdo", 0.5];
-        case "pd": return [ "RD"+rand , "na perna direita", 0.5];
-        case "pe": return [ "RD"+rand , "na perna esquerda", 0.5];
-        case "e1": return [ "RD"+rand , "na " + u.exBdpart1, 0.5];
-        case "e2": return [ "RD"+rand , "na " + u.exBdpart2, 0.5];
+        case "cb": return [ "RD"+rand , "in the head", 2];
+        case "tr": return [ "RD"+rand , "in the body", 1];
+        case "bd": return [ "RD"+rand , "in the right arm", 0.5];
+        case "be": return [ "RD"+rand , "in the left arm", 0.5];
+        case "pd": return [ "RD"+rand , "in the right leg", 0.5];
+        case "pe": return [ "RD"+rand , "in the left leg", 0.5];
+        case "e1": return [ "RD"+rand , "in its " + u.exBdpart1, 0.5];
+        case "e2": return [ "RD"+rand , "in its " + u.exBdpart2, 0.5];
         //case "e3": return [ "RD"+rand , "na " + u.exBdpart3, 0.5];
         //case "e4": return [ "RD"+rand , "na " + u.exBdpart4, 0.5];//just in case....
     }

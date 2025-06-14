@@ -5,8 +5,8 @@ const { info, pc } = require("../../data/locale.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("cp")
-    .setDescription("Distribute your Creation Points (PCs) into base stats")
+    .setName("bp")
+    .setDescription("Distribute your Base Points (BPs) into base stats")
     .setNameLocalizations({
       "pt-BR": "pc",
     })
