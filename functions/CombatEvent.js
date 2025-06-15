@@ -58,18 +58,7 @@ function createCombat(userId, npcId) {
     return result.lastInsertRowid;
 }
 
-/*function chooseNpcAction(npc) {
-    const moveSlots = [1, 2, 3].filter(i => npc[`move_${i}`]); // só slots válidos
-    const selectedSlot = moveSlots[Math.floor(Math.random() * moveSlots.length)];
 
-    const moveId = npc[`move_${selectedSlot}`];
-    const mods = npc[`mod_move_${selectedSlot}`] || null;
-
-    return {
-        move: `move:${moveId}`,
-        mods
-    };
-}*/
 function chooseNpcAction(npc) {
     const opts = [
         [npc.move_1, npc.mod_move_1],
@@ -86,30 +75,35 @@ function chooseNpcAction(npc) {
     };
 }
 
-function pickBodyPart(u) {
-    const options = ["cb", "tr", "tr", "tr", "tr", "tr", "bd", "be", "pd", "pe"].filter(Boolean);
-    if (u.exBdpart1 !== "none") options.push("e1");
-    if (u.exBdpart2 !== "none") options.push("e2");
-    //if (u.exBdpart3 !== "none") options.push("e3");
-    //if (u.exBdpart4 !== "none") options.push("e4");//just in case....
-    const filtered = options.filter(opt => u["RD" + opt] !== null);
-    const rand = filtered[Math.floor(Math.random() * filtered.length)];
+function pickBodyPart(u, f) {
+    if (DEBUG) console.log(f);
+    let filtered = [];
+    if (f === "rand"){
+        const options = ["cb", "tr", "tr", "tr", "tr", "tr", "bd", "be", "pd", "pe"].filter(Boolean);
+        if (u.exBdpart1 !== "none") options.push("e1");
+        if (u.exBdpart2 !== "none") options.push("e2");
+        //if (u.exBdpart3 !== "none") options.push("e3");
+        //if (u.exBdpart4 !== "none") options.push("e4");//just in case....
+        filtered = options.filter(opt => u["RD" + opt] !== null);
+    }
+    const part = f !== "rand" ? f : filtered[Math.floor(Math.random() * filtered.length)];
+
     if (DEBUG) console.log(filtered);
-    switch (rand) {
-        case "cb": return [ "RD"+rand , "in the head", 2];
-        case "tr": return [ "RD"+rand , "in the body", 1];
-        case "bd": return [ "RD"+rand , "in the right arm", 0.5];
-        case "be": return [ "RD"+rand , "in the left arm", 0.5];
-        case "pd": return [ "RD"+rand , "in the right leg", 0.5];
-        case "pe": return [ "RD"+rand , "in the left leg", 0.5];
-        case "e1": return [ "RD"+rand , "in its " + u.exBdpart1, 0.5];
-        case "e2": return [ "RD"+rand , "in its " + u.exBdpart2, 0.5];
-        //case "e3": return [ "RD"+rand , "na " + u.exBdpart3, 0.5];
-        //case "e4": return [ "RD"+rand , "na " + u.exBdpart4, 0.5];//just in case....
+    switch (part) {
+        case "cb": return [ "RD"+part , `in the head`, 2];
+        case "tr": return [ "RD"+part , `in the body`, 1];
+        case "bd": return [ "RD"+part , `in the right arm`, 0.5];
+        case "be": return [ "RD"+part , `in the left arm`, 0.5];
+        case "pd": return [ "RD"+part , `in the right leg`, 0.5];
+        case "pe": return [ "RD"+part , `in the left leg`, 0.5];
+        case "e1": return [ "RD"+part , `in its ${u.exBdpart1}`, 0.5];
+        case "e2": return [ "RD"+part , `in its ${u.exBdpart2}`, 0.5];
+        //case "e3": return [ "RD"+part , "na " + u.exBdpart3, 0.5];
+        //case "e4": return [ "RD"+part , "na " + u.exBdpart4, 0.5];//just in case....
     }
 }
 
-async function processCombatAction(user, move, pr, combateId) {
+async function processCombatAction(user, move, combateId) {
 
     if (DEBUG) console.time('initial data reading');
     const startMem5 = process.memoryUsage().heapUsed;
@@ -122,11 +116,6 @@ async function processCombatAction(user, move, pr, combateId) {
 
     const moveId = move.id;
     if (!move) return '❌ Ação inválida.';
-
-    ///////////Round Start//////////////
-    if (DEBUG) console.log("valor de PR dentro da função:", pr)
-    if (pr) addStatus(player, "PR_BOOST");
-    ////////////////////////////////////
 
     /*updateCombat(combateId, {
         user_action: `move:${moveId}`,
@@ -142,7 +131,7 @@ async function processCombatAction(user, move, pr, combateId) {
 
         // Recarrega o estado e processa novamente
         const combatUpdated = getCombatState(user.id);
-        return await processCombatAction(user, move, pr, combateId);
+        return await processCombatAction(user, move, combateId);
     }
 
     // Resolver turno
@@ -179,6 +168,8 @@ async function processCombatAction(user, move, pr, combateId) {
 
     if (DEBUG) console.timeEnd('initial data reading'),console.log(`Memória usada: ${((process.memoryUsage().heapUsed - startMem5) / 1024 / 1024).toFixed(2)}MB`);
 
+    if (DEBUG) console.time('round processing');
+    const startMem4 = process.memoryUsage().heapUsed;
 
     ////Turn Order and Dist Setup//////
     const result = resolveCombatTurn(player, npc, move, npcMove, combat.dist);
@@ -245,6 +236,9 @@ async function processCombatAction(user, move, pr, combateId) {
         { name: '\u200B', value: stats.barCreate(player,"PV")+'\u2003 '+stats.barCreate(npc,"PV")+'\n'+
             stats.barCreate(player,"PM")+'\u2003 '+stats.barCreate(npc,"PM")+'\n'+
             stats.barCreate(player,"PR")+'\u2003 '+stats.barCreate(npc,"PR"), inline: true });
+
+    if (DEBUG) console.timeEnd('round processing'),console.log(`Memória usada: ${((process.memoryUsage().heapUsed - startMem4) / 1024 / 1024).toFixed(2)}MB`);
+
 
     return {
         embeds: [embed],
@@ -319,6 +313,7 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
     const rollDef = roll2d10();
     const rollPR = hasStatus(attacker, "PR_BOOST")? roll1d10() : 0;
     const rollRun = hasStatus(defender, "PR_BOOST")&&hasStatus(defender, "FUGA")? roll1d10() : 0;
+    let foco = "rand";
     let acerto = 0;
     let dano = 0;
     let danofinal = 0;
@@ -379,11 +374,13 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
                 if (eff) {
                     for (const key in eff) {
                         if (key === 'consome') continue; // trata depois
-                        try {
-                            eval(`${key} += ${eff[key]}`);
-                        } catch (err) {
-                            console.warn(`[⚠️ TAG TRIGGER] Falha ao aplicar '${key}':`, err.message);
-                        }
+                        if (key === 'foco') foco = `${eff[key]}`;
+                        if (key === 'acerto') acerto += eff[key];
+                        //try {
+                        //    eval(`${key} += ${eff[key]}`);
+                        //} catch (err) {
+                        //    console.warn(`[⚠️ TAG TRIGGER] Falha ao aplicar '${key}':`, err.message);
+                        //}
                     }
                     if (eff?.consome) {
                         removeStatus(attacker, tag[0]);
@@ -418,7 +415,7 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
             // 🎯 Acertou
 
             ////Pega a parte do corpo atingida e RD da mesma///////////////
-            const bpRD = pickBodyPart(defender); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
+            const bpRD = pickBodyPart(defender, foco); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
             if (DEBUG) console.log("RD no" + defender[bpRD[1]] +":"+ defender[bpRD[0]]);
 
             ////Calcula o Dano final e atualiza PV////////

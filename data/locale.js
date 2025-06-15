@@ -123,7 +123,13 @@ const act = {
     on_event: `Impossible, resolve your current situation first ( /act )`,
     inv_opt: `Invalid Option`,
     cant_pay: `:star: You are unable to pay this action cost... :star:`,
-    no_combat_pr:`:star: You can't use Rythm Points for this action. :star:`
+    no_combat_pr:`:star: You can't use Rythm Points for this action. :star:`,
+    tr: `Body`,
+    cb: `Head`,
+    bd: `Right Arm`,
+    be: `Left Arm`,
+    pd: `Right Leg`,
+    pe: `Left Leg`
 }
 const ce = {
     vic: `Victory!`,

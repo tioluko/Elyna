@@ -13,7 +13,70 @@ const CombatTriggers = {
         }
     },
 
+    onAction: {
+        REC_PR: (entity, log) => {
+            const max = +entity.MPR || 0;
+            const rec = Math.floor(max / 2);
+            entity.PR = Math.min(entity.PR + rec, max);
+            log.push(`**${entity.nome}** ${cf.rec_pr} ${rec} PR ✨`);
+            return;
+        },
+        FUGA: (entity, log) => {
+            addStatus(entity, "FUGA");
+            log.push(`**${entity.nome}** ${cf.running}!`);
+            return;
+        }
+    },
+
     onHitBefore: {
+        FOCUScb: (entity, log) => {
+            if (DEBUG) console.log("Mirando na cabeça");
+            return {
+                foco: String("cb"),
+                consome: true };
+        },
+        FOCUStr: (entity, log) => {
+            if (DEBUG) console.log("Mirando no tronco");
+            return {
+                foco: "tr",
+                consome: true };
+        },
+        FOCUSbd: (entity, log) => {
+            if (DEBUG) console.log("Mirando no braço d");
+            return {
+                foco: "bd",
+                consome: true };
+        },
+        FOCUSbe: (entity, log) => {
+            if (DEBUG) console.log("Mirando no braço e");
+            return {
+                foco: "be",
+                consome: true };
+        },
+        FOCUSpd: (entity, log) => {
+            if (DEBUG) console.log("Mirando na perna d");
+            return {
+                foco: "pd",
+                consome: true };
+        },
+        FOCUSpe: (entity, log) => {
+            if (DEBUG) console.log("Mirando na perna e");
+            return {
+                foco: "pe",
+                consome: true };
+        },
+        FOCUSe1: (entity, log) => {
+            if (DEBUG) console.log("Mirando em e1");
+            return {
+                foco: "e1",
+                consome: true };
+        },
+        FOCUSe2: (entity, log) => {
+            if (DEBUG) console.log("Mirando em e2");
+            return {
+                foco: "e2",
+                consome: true };
+        },
         PR_BOOST: (entity, log) => {
             if (DEBUG) console.log("Pr boost ativado");
             return {
@@ -34,21 +97,6 @@ const CombatTriggers = {
             console.log("Stun after hit:",getStatusDuration(entity, "STUN"));
             return {
                 acerto: -pen };
-        }
-    },
-
-    onAction: {
-        REC_PR: (entity, log) => {
-            const max = +entity.MPR || 0;
-            const rec = Math.floor(max / 2);
-            entity.PR = Math.min(entity.PR + rec, max);
-            log.push(`**${entity.nome}** ${cf.rec_pr} ${rec} PR ✨`);
-            return;
-        },
-        FUGA: (entity, log) => {
-            addStatus(entity, "FUGA");
-            log.push(`**${entity.nome}** ${cf.running}!`);
-            return;
         }
     },
 

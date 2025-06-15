@@ -46,6 +46,7 @@ module.exports = {
           "pt-BR": "Cada ponto em Perícia custa 3 PPs",
         })
         .setRequired(true)
+        .setAutocomplete(true)
         //.addChoices(...perkChoices),
     )
     .addIntegerOption((option) =>
