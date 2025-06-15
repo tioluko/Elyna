@@ -1,0 +1,95 @@
+Naturais
+
+Aprendiz Apto +PP ou +PC                        Placeholder caso não haja nenhuma peculiaridade que se possa adquirir
+
+Analgesia-X Menos/Sem pen de PV baixo           Res 5>10
+Anfibio Sem penalidade em agua                  Mutação
+Arma Natural-X +2DN/nv para ataque desarmado    Mutação
+Armadura Natural-X +2RD/nv                      Mutação
+Assustador-X -1INI/nv para o oponente           For e Car 4>8>12*
+Beleza-X                                        Mutação
+Berserker-X Bônus enqunto estiver em Furia      ?????
+Couro Grosso Afeta sistema de DN pesado/Extremo ?????
+Defesa Magica +2GM/nv                           Ess e Res 4>8>12*
+Determinado Chance de sobreviver com 1PV        Res 6
+Diligente-X +1/nv Tempo maximo para trabalhos   Res e Int 4>6>8>10>12*
+Equilíbrio-X +1 EQ/nv                           Agi e For 4>6>8>10>12*
+Estivador-X +carga maxima/nv                    For e Res  4>6>8>10>12*
+Impressionante-X +Bonus em Socialização         Car e Ess 4>8>12*
+Memória Fotográfica +info de area               Mutação
+Metabolismo Eficiente +recup de Consumiveis     Mutação
+Resistência Climática-X +variação temp/nv       Res 6>8>10>12*
+Resistente-X +10 maxPV/nv                       Res 5>10>15*
+Reserva Mágica-X +10 maxPM/nv                   Ess 5>10>15*
+Vontade de Ferro-X +2RM/nv                      Int e Res 4>8>12*
+Rapido-X +1 MOV/nv                              Agi 6>8>10>12*
+
+Habilidades
+
+Ajustar Forma-X Reequilibrar recupera +1 PR     Desarmado 4>6>8>10*
+Analista Bonus de acordo com n de turnos        Investigação 8
+Arrancada-X +1 MOV/nv avançando no oponente     Atletismo 4>6>8>10*
+Arma Favorita-X +2 AC para os itens na mão      ArmaBrancas/Arquearia/ArmasdeFogo 4>6>8>10*
+Passo Ofensivo-X -1 Dist inicial                Atletismo e Desarmado 4>6>8>10
+Passo Defensivo-X +1 Dist inicial               Atletismo e ArmadeFogo/Arquearia 4>6>8>10
+Blitz-X Primeiro ataque tem +5/nv               ArmaBrancas/Arquearia/ArmasdeFogo/Desarmado 4>8>12*
+Bloqueio Agressivo Bloq tira 1PR do oponente    ArmasBrancas 6
+Dança de Guerra-X +2RE/nv                       ArtesPerformaticas 4>8>12*
+Cortador de Balas-X +2RE/nv contra atks a dist  ArmasBrancas 6>8>10>12*
+Cortador de Ondas (usa RE contra habs especiais)ArmasBrancas e Ocultismo 6
+Elegância   Usa AGI ao invés de força no dano   ArmasBrancas e ArtesPerformaticas 5
+Olhar Médico-X Vê o valor de PV/PVePR do alvo   Medicina 4>8
+Senso Místico  Vê o valor de PM do alvo         Ocultismo e Magia 4
+Evasão Perfeita-X +1Re/nv se tiver com PRmaximo ArtesPerformaticas e Desarmado/ArmaBrancas 4>6>8>10*
+Impacto-X +1DN/nv se tiver com PRmaximo         ArtesPerformaticas e Desarmado/ArmaBrancas 4>6>8>10*
+Ambidestria-X -1 na pen/nv usando atk multiplo  ArmaBrancas/ArmasdeFogo 6>8>10*
+Fluxo Contínuo +1 bonus/rodada sem tomar dano   ArtesPerformaticas e Atletismo 5
+
+Agarrão ????                                    Desarmado
+Ataque Multiplo Pode atacar 2x se tiver 2 armas ArmaBrancas
+Dois Céus Pode atacar 2x se tiver 2 armasdefogo ArmadeFogo
+Jab(2 ataques rapidor e precisos, porem fracos) Desarmado
+Disparo Focado --INI +AC (e não move)           ArmadeFogo/Arquearia
+Parry --INI +RE e +AC se o oponente errar       ArmaBrancas
+Contra-Ataque --INI +ACeDN se o oponente errar  Desarmado/ArmaBrancas
+Ataque em Movimento Aumenta o bonus de DN/mov   Atletismo e Desarmado/ArmaBrancas
+Disparo Duplo --INI se o oponente errar, atk 2x ArmadeFogo/Arquearia
+Disparo Zen Soma RM ao acerto                   Arquearia
+Recuo Ritmico só recua(+dist) e recupera 2 PR   Atletismo e ArtesPerformaticas
+Ataque Focado   --INI +AC                       Investigação e ArmaBrancas/Desarmado/Arquearia/ArmadeFogo
+Ataque Concentrado --INI -RE ++DN               ArmaBrancas
+
+Em geral: Ocultismo destranca habs sobrenaturais, e Magia é Magia.
+
+Manipulação Material                            SIN, Magia
+    Pilar Rochoso
+        Prisão Rochosa
+            Desintegrar
+            (coisas q ajudam no craft tbm?)
+    Ar Resfriado
+        Ice bullshits
+
+Manipulação Energética                          SIN, Magia
+    Invocar Chamas
+        Habs de fogo mais fortes
+    Faíscas Elétricas
+        Habs eletricas mais fortes
+
+        Luz
+        Radiação
+        Som
+        Sombras
+
+Telecinese                                      SIN, INT, Magia
+    Punho Invisível
+        Etc
+
+Telepatia                                       SIN, INT, Ocultismo
+    Ataque mental
+        Etc
+
+
+
+Bloquear: tenta defender com rolagem de acerto, Não usa DC mas o valor de dano do inimigo ainda conta com perda de EQ
+Arremesso (Arma) Arremessa a arma equipada
+
