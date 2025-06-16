@@ -216,23 +216,6 @@ class CombatEngine {
             else {result.log += ``;}
         }
 
-        const imageBuffer = await generateCombatImageBuffer(user.image, npc.image, playerDead, npcDead);
-        const file = new AttachmentBuilder(imageBuffer, { name: 'vs.png' });
-
-        const embed = new EmbedBuilder()
-        .setTitle(`⚔️ __**${user.nome}**__ \u2003x\u2003 __**${npc.nome}**__ ⚔️ `)
-        .setImage('attachment://vs.png')
-        .setDescription(result.log)
-        .addFields(
-            { name: '\u200B', value: stats.barCreate(player,"PV")+'\u2003 '+stats.barCreate(npc,"PV")+'\n'+
-                stats.barCreate(player,"PM")+'\u2003 '+stats.barCreate(npc,"PM")+'\n'+
-                stats.barCreate(player,"PR")+'\u2003 '+stats.barCreate(npc,"PR"), inline: true });
-
-        return {
-            embeds: [embed],
-            files: [file]
-        };
-
         const playerDead = this.player.PV <= 0;
         const npcDead = this.npc.PV <= 0;
 
@@ -248,13 +231,14 @@ class CombatEngine {
         ].filter(([id]) => id);
 
         const [id, mods] = opts[Math.floor(Math.random() * opts.length)];
-
-        const npcAction = chooseNpcAction(npc);
         const move = getMoveById(id);
+        if (npc.PR > 1){
+            npc.PR -= 1;
+            addStatus(npc, "PR_BOOST");
+        }
 
         if (mods) {
             try {
-                const mods = npcAction.mods;
                 const movemods = mods ? JSON.parse(mods) : null;
                 for (const key in movemods) {
                     if (key in move && typeof move[key] === 'number') {

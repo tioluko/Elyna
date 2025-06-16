@@ -204,33 +204,39 @@ function removeStatus(entity, tag) {
 function addDmgTypeEffect (entity, ele, log, pow = 1 ){
     switch (ele) {
         case "ct": {
-            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "STUN") ? `${cf.add_stn}` : `${cf.is_stn}`));
-            addStatus(entity, "STUN", (3*pow));
-            return;
+            if (!hasStatus(entity, "UNDEAD")) {
+                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "STUN") ? `${cf.add_stn}` : `${cf.is_stn}`));
+                addStatus(entity, "STUN", (3*pow));
+            }return;
         }case "cr": {
-            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
-            addStatus(entity, "BLEED", (5*pow));
-            return;
+            if (!hasStatus(entity, "UNDEAD")) {
+                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
+                addStatus(entity, "BLEED", (5*pow));
+            }return;
         }case "pn": {
-            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
-            addStatus(entity, "BLEED", (5*pow));
-            return;
+            if (!hasStatus(entity, "UNDEAD")) {
+                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
+                addStatus(entity, "BLEED", (5*pow));
+            }return;
         }case "ch": {
-            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
-            addStatus(entity, "PARALZ", (5*pow));
-            return;
+            if (!hasStatus(entity, "UNDEAD")) {
+                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
+                addStatus(entity, "PARALZ", (5*pow));
+            }return;
         }case "cg": {
-            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
-            addStatus(entity, "PARALZ", (5*pow));
-            return;
+            if (!hasStatus(entity, "UNDEAD")) {
+                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
+                addStatus(entity, "PARALZ", (5*pow));
+            }return;
         }case "qm": {
             log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BURN") ? `${cf.add_brn}` : `${cf.is_brn}`));
             addStatus(entity, "BURN", (5*pow));
             return;
         }case "vt": {
-            log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "NAUSEA") ? `${cf.add_nau}` : `${cf.is_nau}`));
-            addStatus(entity, "NAUSEA", (5*pow));
-            return;
+            if (!hasStatus(entity, "UNDEAD")) {
+                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "NAUSEA") ? `${cf.add_nau}` : `${cf.is_nau}`));
+                addStatus(entity, "NAUSEA", (5*pow));
+            }return;
         }case "ep": return;
     }
 }

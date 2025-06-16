@@ -31,9 +31,6 @@ function createCombat(userId, npcId) {
         }
     }
 
-    //userClone.STATUS = user.STATUS;
-    //userClone.STATUS = JSON.stringify([...JSON.parse(user.STATUS || '[]')]);
-
     const npcBase = db.prepare('SELECT * FROM npcs WHERE id = ?').get(npcId);
     // Clona NPC com update de stats
     const npcClone = { ...npcBase };
@@ -66,7 +63,19 @@ function chooseNpcAction(npc) {
         [npc.move_3, npc.mod_move_3],
     ].filter(([id]) => id);
 
-    const [id, mods] = opts[Math.floor(Math.random() * opts.length)];
+    let [id, mods] = opts[Math.floor(Math.random() * opts.length)];
+
+    if (npc.PR > 1 && chance(50)){
+        npc.PR -= 1;
+        addStatus(npc, "PR_BOOST");
+    }
+    if (npc.PR <= 1 && chance(40+(npc.INT*10))){
+        return {
+            move: `move:98`,
+            id: 98,
+            mods: null
+        };
+    }
 
     return {
         move: `move:${id}`,
@@ -624,6 +633,11 @@ function formatLootSummary(loot) {
     return Object.entries(grouped)
     .map(([name, qty]) => `+${qty} **${name}**`)
     .join(', ');
+}
+
+function chance(percent) {
+    // Returns true with the given percent chance (0-100)
+    return Math.random() * 100 < percent;
 }
 
 
