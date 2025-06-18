@@ -188,7 +188,8 @@ function getCombatState(userId) {
         npc_action: row.npc_action,
         user_action_data: row.user_action_data,
         npc_action_data: row.npc_action_data,
-        state: row.state
+        state: row.state,
+        round: row.round
     };
 }
 

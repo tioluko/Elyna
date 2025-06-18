@@ -120,8 +120,8 @@ const CombatTriggers = {
                 log.push(`**${entity.nome}** ${cf.psn_res}`);
                 return;
             }else {
-                addStatus(entity, "POISON", (1+dt-result));
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "POISON") ? `${cf.add_psn}` : `${cf.is_psn}`));
+                addStatus(entity, "POISON", (1+dt-result));
                 return;
             }
         },

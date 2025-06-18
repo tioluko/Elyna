@@ -114,7 +114,8 @@ function processLootFromNPC(npc) {
         valuableIds: value // 👈 enviado para uso interno
     });
     console.log("drops:"+JSON.stringify(drops));
-    return drops;
+    return drops.filter(item => item !== null && item !== undefined);
+    //return drops;
 }
 
 function getRandomItemFromDB({ itemType, tier, slot, itemIdWhitelist = [] }) {

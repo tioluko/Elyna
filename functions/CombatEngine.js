@@ -32,6 +32,7 @@ class CombatEngine {
 
         // Inicializa log e estado interno
         //this.log = [];
+        this.round = this.combat.round;
         this.result = null;
 
         if (DEBUG) console.timeEnd('initial data reading'),console.log(`Memória usada: ${((process.memoryUsage().heapUsed - startMem) / 1024 / 1024).toFixed(2)}MB`);
@@ -48,22 +49,17 @@ class CombatEngine {
         return Array.isArray(status) ? status : [];
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    ////////////////////////////Main Proccess Start//////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-
-
-
-
-
-    // Método principal: executar uma rodada
+    // Execução de rodada
     async execute(move) {
         if (DEBUG) console.time('move reading');
         const startMem2 = process.memoryUsage().heapUsed;
         // Reseta log
         this.log = [];
+        this.round++;
 
         const moveId = move.id;
         if (!move) return '❌ Ação inválida.';
@@ -78,7 +74,7 @@ class CombatEngine {
             user_action: `move:${moveId}`,
             user_action_data: JSON.stringify(move),
             npc_action: `move:${npcAction.id}`,
-            npc_action_data: JSON.stringify(npcMove)
+            npc_action_data: JSON.stringify(npcMove),
         });
         stats.updateNpc(this.player);
         stats.updateNpc(this.npc)
@@ -138,6 +134,7 @@ class CombatEngine {
             /////////////////////////////////////////////
             //Checa se o move é SELF (tipo 0) e skippa tudo daqui até o endround effect
             if (aMove.tipo > 0){
+                hitting:{
 
                 if (DEBUG) console.log("Flying opponent?"+ getStatusDuration(defender, "FLY"));
                 this.acerto = rollAtk.total + rollPR + bonus.acerto - (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
@@ -175,10 +172,9 @@ class CombatEngine {
                     this.log.push(` ${attacker.nome} ${ce.miss}❌`);
                     if (hasStatus(defender, "FUGA")) {
                         this.log.push(`\n💨 **${defender.nome} ${ce.run}!**`);
-                        break;
                     }
                     this.log.push('\n');
-                    continue;
+                    break hitting;
                 }
                 ////Pega a parte do corpo atingida e RD da mesma///////////////
                 const bpRD = this.pickBodyPart(defender, this.foco); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
@@ -212,6 +208,7 @@ class CombatEngine {
                     this.log.push(`⚠️ **${defender.nome}** ${ce.bal}`);
                 }
                 //////////////////////////////////
+              }
             }
             ////Apply end round effects///////
             for (const tag of tags) {
@@ -227,7 +224,7 @@ class CombatEngine {
             this.log.push('\u200B');
             //this.log.push('\n');
             if (DEBUG) console.log("---");
-            if (attacker.PV <= 0) break;
+            if (attacker.PV <= 0 || defender.PV <= 0) break;
         }
         ///Check if the battle is over//////
         const end = this.player.PV <= 0 || this.npc.PV <= 0 || hasStatus(this.player, "FUGA") ;
@@ -247,7 +244,8 @@ class CombatEngine {
             npc_action_data: null,
             user_data: JSON.stringify(this.player),
             npc_data: JSON.stringify(this.npc),
-            state: end ? 'ended' : 'waiting'
+            state: end ? 'ended' : 'waiting',
+            round: this.round
         });
 
         if (end) {
@@ -265,18 +263,25 @@ class CombatEngine {
                 stats.addxp(this.player, exp);
 
                 const loot = processLootFromNPC(this.npc); // <- captura resultado
+                console.log("drops filtrados:"+JSON.stringify(loot));
                 await insertToInventory(this.player.id, loot); // Insere
                 const lootText = this.formatLootSummary(loot);   // Escreve o log
 
                 // loot = generateLoot(npc); // <- Loot futura aqui?
                 this.log.push(`\n🏆 ${ce.vic}! **${this.player.nome}** ${ce.got} **${exp} XP**!`);
-                if (loot !== null) this.log.push(`\n📦 ${lootText} ${ce.on} ${this.npc.nome}`);
+                if (loot.length > 0) this.log.push(`\n📦 ${lootText} ${ce.on} ${this.npc.nome}`);
             }
             if (defeat || draw) {this.log.push(`\n⚰️ ${ce.dft}`);}
             else {this.log.push("");}
         }
         return await this.buildResultEmbed(playerDead, npcDead);
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    ////////////////////////////Main Proccess End//////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+
 
     // Escolhe a ação do NPC
     chooseNpcAction(npc) {
@@ -360,7 +365,7 @@ class CombatEngine {
                 Acerto: Mod+Agi+Pericia + (Alc - Delta)    Delta = Distancia extra percorrida (acima do MOV) necessária para alcancar o alvo
                 Dano: Mod + For + (Dist/2) - RD do adversario Dist= Distancia percorrida para alcancar o alvo (max=Mov) Math.max(0, Math.round(Math.min(mov + dist, mov) / 2))
                 Alc: Mod*/
-                acerto = m.AC + ag + a[m.pericia] + Math.floor(Math.min((m.ALC + dd),dd/2));
+                acerto = m.AC + ag + a[m.pericia] + Math.floor(Math.min((m.ALC + dd),dd/4));
                 dano = m.DN + fo + Math.max(0, Math.floor(Math.min(mv + d, mv) / 2));
                 desc =    d < 0 ? ce.c0
                 : d === 0 ? ce.c1
@@ -502,6 +507,7 @@ class CombatEngine {
         .setTitle(`⚔️ __**${this.player.nome}**__ \u2003x\u2003 __**${this.npc.nome}**__ ⚔️ `)
         .setImage('attachment://vs.png')
         .setDescription(this.log.join('\n'))
+        .setFooter({text:`Round: ${this.round}`})
         .addFields(
             { name: '\u200B', value: stats.barCreate(this.player,"PV")+'\u2003 '+stats.barCreate(this.npc,"PV")+'\n'+
                 stats.barCreate(this.player,"PM")+'\u2003 '+stats.barCreate(this.npc,"PM")+'\n'+
