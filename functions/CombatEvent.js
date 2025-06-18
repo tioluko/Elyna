@@ -35,6 +35,7 @@ function createCombat(userId, npcId) {
     // Clona NPC com update de stats
     const npcClone = { ...npcBase };
     npcClone.STATUS = npc.STATUS;
+    //npcClone.STATUS = JSON.parse(npc.STATUS || '[]');
 
     const derived = npcInitialize(npcClone);
 
@@ -64,23 +65,34 @@ function chooseNpcAction(npc) {
     ].filter(([id]) => id);
 
     let [id, mods] = opts[Math.floor(Math.random() * opts.length)];
-
-    if (npc.PR > 1 && chance(50)){
+    const PR = npc.PR;
+    if (PR > 1 && chance(50)){
         npc.PR -= 1;
         addStatus(npc, "PR_BOOST");
     }
-    if (npc.PR <= 1 && chance(40+(npc.INT*10))){
+    if (PR <= 1 && chance(40+(npc.INT*10))){
         return {
-            move: `move:98`,
             id: 98,
-            mods: null
+            move:getMoveById(98)
         };
     }
+    const move = getMoveById(id);
 
+    if (mods) {
+        try {
+            const movemods = mods ? JSON.parse(mods) : null;
+            for (const key in movemods) {
+                if (key in move && typeof move[key] === 'number') {
+                    move[key] += movemods[key];
+                }
+            }
+        } catch (err) {
+            console.warn(`[⚠️ NPC MODS] Erro ao aplicar mods em ${id}:`, err.message);
+        }
+    }
     return {
-        move: `move:${id}`,
         id: id,
-        mods: mods ? JSON.parse(mods) : null
+        move: move
     };
 }
 
@@ -126,49 +138,15 @@ async function processCombatAction(user, move, combateId) {
     const moveId = move.id;
     if (!move) return '❌ Ação inválida.';
 
-    /*updateCombat(combateId, {
-        user_action: `move:${moveId}`,
-        user_action_data: JSON.stringify(move)
-    });*/
-
-    // Se ainda não tem ação do inimigo, gerar e salvar
-    if (!combat.npc_action) {
-
-        const npc = JSON.parse(combat.npc_data);
-        const npcAction = chooseNpcAction(npc);
-        updateCombat(combateId, { npc_action: npcAction.move });
-
-        // Recarrega o estado e processa novamente
-        const combatUpdated = getCombatState(user.id);
-        return await processCombatAction(user, move, combateId);
-    }
-
-    // Resolver turno
-    //const npc = JSON.parse(combat.npc_data);
     const npcAction = chooseNpcAction(npc);
-    if (DEBUG) console.log(npcAction)
-    const npcMoveId = npcAction.id;
-    const npcMove = getMoveById(npcMoveId);
+    const npcMove = npcAction.move;
 
-    if (npcAction.mods) {
-        try {
-            const mods = npcAction.mods;
-            for (const key in mods) {
-                if (key in npcMove && typeof npcMove[key] === 'number') {
-                    npcMove[key] += mods[key];
-                }
-            }
-        } catch (err) {
-            console.warn(`[⚠️ NPC MODS] Erro ao aplicar mods em ${npcMoveId}:`, err.message);
-        }
-    }
-    // Verifica se há modificadores associados
     if (DEBUG) console.log('[DEBUG] player_move_data:', JSON.stringify(move));
-    if (DEBUG) console.log('[DEBUG] npc_move_data:', JSON.stringify(npcMove));
+    if (DEBUG) console.log('[DEBUG] npc_move_data:', JSON.stringify(npcAction.move));
     updateCombat(combateId, {
         user_action: `move:${moveId}`,
         user_action_data: JSON.stringify(move),
-        npc_action: npcAction.move,
+        npc_action: `move:${npcAction.id}`,
         npc_action_data: JSON.stringify(npcMove)
     });
 
@@ -331,7 +309,14 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
     let movtexto = "";
     let extexto = "";
 
+    const bonus = moveFormulae(attacker, dist, move);
+    log.push(`**${attacker.nome}** ${movtexto} `+
+    (rollPR > 0 ? ` ${ce.pr_eff}` :"")+
+    ` ${ce.use} ${move.nome}!`);
+
     ////////ON ACTION MOVE EFFECT////////////////////////////////
+    //if (DEBUG) console.log('MOVE EFFECT:', effect);
+    //for (const tag of tags) {effectTrigger("onAction", attacker, tag, log)}
     if (DEBUG) console.log('MOVE EFFECT:', effect);
     for (const tag of tags) {
         if (CombatTriggers.onAction?.[tag]) {
@@ -360,7 +345,7 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
     //e skippa tudo daqui até o endround effect
     if (move.tipo > 0){
         //Calculo dos valores de Acerto/Dano acordo tipo de atk e rolagems anteriores
-        const bonus = moveFormulae(attacker, dist, move);
+        //const bonus = moveFormulae(attacker, dist, move);
         if (DEBUG) console.log("Flying opponent?"+ getStatusDuration(defender, "FLY"));
         acerto = rollAtk.total + rollPR + bonus.acerto - (move.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
         dano = bonus.dano * crit;
@@ -368,12 +353,14 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
 
         //Mostra o ataque utilizado e a forma que foi utilzada
         if (DEBUG) console.log("BonusDefesa:"+ stats.total(defender, "RE") +"+"+ (defender[defpericia]));
-        log.push(`**${attacker.nome}** ${movtexto} `+
+        /*log.push(`**${attacker.nome}** ${movtexto} `+
         (rollPR > 0 ? ` ${ce.pr_eff}` :"")+
-        ` ${ce.use} ${move.nome}!`);
+        ` ${ce.use} ${move.nome}!`);*/
 
         /////////////////////////////////////////////////////////////////////
         ////ATTACKER STATUS BEFORE HIT///
+        //if (DEBUG) console.log('STATUS DO ATTACKER:', attacker.STATUS);
+        //for (const tag of tags) {effectTrigger("onHitBefore", attacker, tag[0], log)}
         if (DEBUG) console.log('STATUS DO ATTACKER:', attacker.STATUS);
         for (const tag of tags) {
             if (CombatTriggers.onHitBefore?.[tag[0]]) {
@@ -385,6 +372,7 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
                         if (key === 'consome') continue; // trata depois
                         if (key === 'foco') foco = `${eff[key]}`;
                         if (key === 'acerto') acerto += eff[key];
+                        if (key === 'dano') dano += eff[key];
                         //try {
                         //    eval(`${key} += ${eff[key]}`);
                         //} catch (err) {
@@ -436,6 +424,8 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
 
             /////////////////////////////////////////
             ////////ON HIT MOVE EFFECT////////////////////////////////
+            //if (DEBUG) console.log('HIT EFFECT:', effect);
+            //for (const tag of tags) {effectTrigger("onHitEffect", defender, tag, log)}
             if (DEBUG) console.log('HIT EFFECT:', effect);
             for (const tag of tags) {
                 if (CombatTriggers.onHitEffect?.[tag]) {
@@ -445,6 +435,7 @@ function resolveAttack(attacker, defender, dist, move, defenderMove) {
                     if (eff) {
                         for (const key in eff) {
                             if (key === 'consome' || key === 'break') continue; // trata depois
+
                             try {
                                 eval(`${key} += ${eff[key]}`);
                             } catch (err) {
@@ -538,6 +529,8 @@ function moveFormulae(a, d, m ) {
     const es = stats.total(a, "ESS");
     const si = stats.total(a, "SIN");
     switch (m.tipo) {
+        case 0:
+            return;
         case 1: /*Close (ataca usando mov se necessario) Reduz distancia em MOV
             Acerto: Mod+Agi+Pericia + (Alc - Delta)    Delta = Distancia extra percorrida (acima do MOV) necessária para alcancar o alvo
             Dano: Mod + For + (Dist/2) - RD do adversario Dist= Distancia percorrida para alcancar o alvo (max=Mov) Math.max(0, Math.round(Math.min(mov + dist, mov) / 2))
@@ -603,6 +596,29 @@ function moveFormulae(a, d, m ) {
         case "ep": return {acerto , dano , desc, ele: st.epdmg, ico: "💠"};
     }
     return { acerto , dano , desc };
+}
+
+function effectTrigger(trigger, entity, tag, log){
+    const context = {
+        foco: "rand",
+        acerto: 0,
+        dano: 0
+    };
+    if (CombatTriggers[trigger]?.[tag]) {
+        if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
+        const eff = CombatTriggers[trigger][tag](entity, log);
+        if (DEBUG) console.log('RESULTADO:', eff);
+        if (eff) {
+            for (const key in eff) {
+                if (key === 'consome') continue; // trata depois
+                if (typeof context[key] === 'number') context[key] += eff[key];
+                else context[key] = eff[key];
+            }
+            if (eff?.consome) {
+                removeStatus(entity, tag);
+            }
+        }
+    }
 }
 
 function roll2d10() {

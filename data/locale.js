@@ -161,7 +161,9 @@ const ce = {
 };
 const cf = {
     blitz: `:star: **Blitz On** :star:`,
-    rec_pr: `rebalances recovering`,
+    rest: `restores`,
+    pv: `HP`,
+    pr: `RP`,
     running: `is trying to run away`,
     resroll: `Resistance Roll`,
     psn_res: `resists the poison`,

@@ -2,6 +2,7 @@ const { DEBUG } = require('../../config.js');
 const { SlashCommandBuilder } = require('discord.js');
 const { getUserData, getUserMoves, getCombatState, updateCombat, updateCombatUserData } = require('../../utils/db');
 const { processCombatAction } = require('../../functions/CombatEvent');
+const CombatEngine = require('../../functions/CombatEngine');
 const { processNarrativeAction } = require('../../functions/NarrativeEvent');
 const stats = require('../../functions/stats');
 const { info, act } = require('../../data/locale.js');
@@ -143,7 +144,9 @@ module.exports = {
             if (DEBUG) console.timeEnd('action setup'),console.log(`Memória usada: ${((process.memoryUsage().heapUsed - startMem3) / 1024 / 1024).toFixed(2)}MB`);
 
 
-            const result = await processCombatAction(player, selected, combateId);
+            //const result = await processCombatAction(player, selected, combateId);
+            const engine = new CombatEngine(combateId);
+            const result = await engine.execute(selected);
 
             //////Solução temporaria pra evitar o spam.
             const lastMsgId = lastCombatMessages.get(player.id);

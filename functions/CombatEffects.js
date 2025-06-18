@@ -15,10 +15,17 @@ const CombatTriggers = {
 
     onAction: {
         REC_PR: (entity, log) => {
-            const max = +entity.MPR || 0;
+            const max = entity.MPR || 0;
             const rec = Math.floor(max / 2);
             entity.PR = Math.min(entity.PR + rec, max);
-            log.push(`**${entity.nome}** ${cf.rec_pr} ${rec} PR ✨`);
+            log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pr} ✨`);
+            return;
+        },
+        REC_PV: (entity, log) => {
+            const max = entity.MPV || 0;
+            const rec = total(entity, "ESS") + (entity.NV * 2);
+            entity.PV = Math.min(entity.PV + rec, max);
+            log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pv} ✨`);
             return;
         },
         FUGA: (entity, log) => {
