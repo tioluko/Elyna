@@ -9,7 +9,8 @@ function generateLoot({
     specificType = null,
     highTierChance = 0,
     lowTierChance = 0,
-    valuableIds = []
+    valuableIds = [],
+    consumableIds = []
 }) {
     const results = [];
 
@@ -52,7 +53,9 @@ function generateLoot({
             itemType,
             tier: finalTier,
             slot,
-            itemIdWhitelist: itemType === 'value' ? valuableIds : []
+            itemIdWhitelist:
+            itemType === 'value' ? valuableIds :
+            itemType === 'consumable' ? consumableIds : []
         });
         console.log("result:"+item.nome);
         results.push(item || null); // pusha o item real ou null se nada achado
@@ -101,7 +104,8 @@ function processLootFromNPC(npc) {
         specificType = null,
         highTierChance = 0,
         lowTierChance = 0,
-        value = [] // lista de IDs específicos
+        value = [],
+        consumable = [] // lista de IDs específicos
     } = lootConfig;
 
     const drops = generateLoot({
@@ -111,7 +115,8 @@ function processLootFromNPC(npc) {
         specificType,
         highTierChance,
         lowTierChance,
-        valuableIds: value // 👈 enviado para uso interno
+        valuableIds: value,
+        consumableIds: consumable // 👈 enviado para uso interno
     });
     console.log("drops:"+JSON.stringify(drops));
     return drops.filter(item => item !== null && item !== undefined);
@@ -131,7 +136,7 @@ function getRandomItemFromDB({ itemType, tier, slot, itemIdWhitelist = [] }) {
         params.push(slot);
     }
 
-    if (itemType === 'value' && itemIdWhitelist.length > 0) {
+    if (itemIdWhitelist.length > 0) {
         const placeholders = itemIdWhitelist.map(() => '?').join(',');
         query += ` AND id IN (${placeholders})`;
         params.push(...itemIdWhitelist);

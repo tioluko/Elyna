@@ -10,8 +10,8 @@ function getTile(x, y) {
         rank: mapa.rank[y][x],
         clima: mapa.clima[y][x],
         nome: mapa.nome[y][x],
-        ocupacao: mapa.ocupação[y][x],
-        contaminacao: mapa.contaminação[y][x],
+        ocup: mapa.ocupação[y][x],
+        cont: mapa.contaminação[y][x],
         recursos: mapa.recursos[y][x]
     };
 }

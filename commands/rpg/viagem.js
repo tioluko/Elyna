@@ -2,33 +2,38 @@ const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discor
 const { getUserData, updateUserData } = require('../../utils/db.js');
 const { generateMiniMapImage } = require('../../utils/ImageGen.js');
 const { getTile } = require('../../functions/MapReader.js');
+const { info } = require('../../data/locale.js');
 const mapa = require('../../data/map.json');
 
 module.exports = {
     cooldown: 5,
     data: new SlashCommandBuilder()
-    .setName('viajar')
-    .setDescription('Viaja para uma direção')
+    .setName('move')
+    .setDescription('Travel to another zone')
+    .setNameLocalizations({ "pt-BR": "mover" })
+    .setDescriptionLocalizations({ "pt-BR": "Viaja para outra zona" })
     .addStringOption(option =>
     option.setName('direcao')
-    .setDescription('Para onde deseja ir?')
+    .setDescription('Where are you going?')
+    .setNameLocalizations({ "pt-BR": "direção" })
+    .setDescriptionLocalizations({ "pt-BR": "Para onde deseja ir?" })
     .setRequired(true)
     .addChoices(
-        { name: 'Norte', value: 'norte' },
-        { name: 'Sul', value: 'sul' },
-        { name: 'Leste', value: 'leste' },
-        { name: 'Oeste', value: 'oeste' },
-        { name: 'Nordeste', value: 'nordeste' },
-        { name: 'Noroeste', value: 'noroeste' },
-        { name: 'Sudeste', value: 'sudeste' },
-        { name: 'Sudoeste', value: 'sudoeste' },
+        { name: 'North', value: 'norte' },
+        { name: 'South', value: 'sul' },
+        { name: 'East', value: 'leste' },
+        { name: 'West', value: 'oeste' },
+        { name: 'North-east', value: 'nordeste' },
+        { name: 'North-west', value: 'noroeste' },
+        { name: 'South-east', value: 'sudeste' },
+        { name: 'South-west', value: 'sudoeste' },
     )
     ),
 
     async execute(interaction) {
         const user = getUserData(interaction.user.id);
         if (!user) {
-            return interaction.reply(`:star: Voce ainda não tem um personagem, use o comando **/criarficha** para criar um! :star:`);
+            return interaction.reply(info.no_character);
         }
 
         const dir = interaction.options.getString('direcao');
@@ -61,7 +66,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
         .setTitle(`🧭 Nova Área: ${tile.nome !== 'none' ? tile.nome : `Terreno ${tile.tipo}`}`)
-        .setDescription(`📌 Localização: (${newX}, ${newY})\n🌎 Tipo: ${tile.tipo}\n🧱 Rank: ${tile.rank}`)
+        .setDescription(`📌 Localização: (${newX}, ${newX})\n Tipo: ${tile.tipo}\n Rank: ${tile.rank}\n Ocupação: ${tile.ocup}\n Contaminação: ${tile.cont}`)
         .setImage('attachment://mapa.png');
 
         await interaction.reply({ embeds: [embed], files: [file] });

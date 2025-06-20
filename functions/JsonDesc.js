@@ -1,13 +1,15 @@
+const { jd } = require('../data/locale.js');
+
 function describeMods(mods) {
     if (!mods || typeof mods !== 'object') return '';
 
     const regionMap = {
-        RDcb: 'Cabeça',
-        RDtr: 'Tronco',
-        RDbd: 'Braço Direito',
-        RDbe: 'Braço Esquerdo',
-        RDpd: 'Perna Direita',
-        RDpe: 'Perna Esquerda',
+        RDcb: jd.cb,
+        RDtr: jd.tr,
+        RDbd: jd.bd,
+        RDbe: jd.be,
+        RDpd: jd.pd,
+        RDpe: jd.pe
     };
 
     const rd = {};
@@ -17,9 +19,14 @@ function describeMods(mods) {
     for (const key in mods) {
         if (key.startsWith('RD')) {
             rd[key] = mods[key];
-        } else if (typeof mods[key] === 'number') {
+        } else if ( key.startsWith('mod') && typeof mods[key] === 'number') {
             // Traduz modXXX → +N XXX
             const attr = key.replace(/^mod/, '');
+            const signal = mods[key] > 0 ? '+' : '';
+            others.push(`${signal}${mods[key]} ${attr.toUpperCase()}`);
+        } else if ( key.startsWith('move') && typeof mods[key] === 'number') {
+            // Traduz moveXXX → +N XXX
+            const attr = key.replace(/^move/, '');
             const signal = mods[key] > 0 ? '+' : '';
             others.push(`${signal}${mods[key]} ${attr.toUpperCase()}`);
         }
@@ -34,13 +41,13 @@ function describeMods(mods) {
         const pernasIguais = rd.RDpd !== undefined && rd.RDpe !== undefined && rd.RDpd === rd.RDpe;
 
         if (braçosIguais) {
-            result['Braços'] = rd.RDbd;
+            result[jd.bs] = rd.RDbd;
             delete rd.RDbd;
             delete rd.RDbe;
         }
 
         if (pernasIguais) {
-            result['Pernas'] = rd.RDpd;
+            result[jd.ps] = rd.RDpd;
             delete rd.RDpd;
             delete rd.RDpe;
         }

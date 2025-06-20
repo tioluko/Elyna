@@ -27,7 +27,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
         .setTitle(`🧭 Área Atual: ${tile.nome !== 'none' ? tile.nome : `Terreno ${tile.tipo}`}`)
-        .setDescription(`📌 Localização: (${x}, ${y})\n🌎 Tipo: ${tile.tipo}\n🧱 Rank: ${tile.rank}`)
+        .setDescription(`📌 Localização: (${x}, ${y})\n Tipo: ${tile.tipo}\n Rank: ${tile.rank}\n Ocupação: ${tile.ocup}\n Contaminação: ${tile.cont}`)
         .setImage('attachment://mapa.png');
 
         /*

@@ -8,6 +8,7 @@ const info = {
     no_character: `:star: You don't have a character yet, use **/newcharacter** to make one! :star:`,
     character_created: `:star: Rejoice, your character is born! :star:\n\nYou can now use the following commands to customize it:\n**/name** Change your name.\n**/avatar** Change your image.\n**/bp** Invest your character points (BPs)\n**/pp** Invest your skill points (PPs)\n**/profile** Display your entire character sheet`,
     set_name: `Your character name is`,
+    on_event: `Impossible, resolve your current situation first ( /act )`,
 
     //Mensagens de erro erro bug etc
     _combat_not_found_: `⚠️ Combat not found or in an invalid state.`,
@@ -40,9 +41,10 @@ const eq ={
     inv_opt: `Invalid option`,
     put: `You equipped`,
     off: `You removed`,
+    use: `You used`
 };
 const map ={
-    aaaa: `aaaaaa`,
+    encounter: `is attacking you! Use **/act** to deal with it!`
 };
 const ficha = {
     //Itens do menu ficha
@@ -117,6 +119,16 @@ const st = {
     qmdmg: "burning damage",
     vtdmg: "vital damage",
     epdmg: "special damage"
+};
+const jd = {
+    tr: `Body`,
+    cb: `Head`,
+    bd: `Right Arm`,
+    be: `Left Arm`,
+    pd: `Right Leg`,
+    pe: `Left Leg`,
+    bs: `Arms`,
+    ps: `Legs`
 };
 const act = {
     no_char: `You don't have a character yet, use /newcharacter to create one!`,
@@ -194,6 +206,7 @@ module.exports = {
     pc,
     pp,
     ava,
+    jd,
     eq,
     map,
     st,

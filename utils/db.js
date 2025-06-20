@@ -58,7 +58,7 @@ function initUserPerks(userId) {
     if (DEBUG) console.log('[initUserPerks] Inserindo perks iniciais para o usuário', userId);
 }
 function initUserInventory(userId) {
-    const defaultItems = [22]; // [{ id: 1, quantidade: 2 }]
+    const defaultItems = [30]; // [{ id: 1, quantidade: 2 }]
     const stmt = db.prepare(`INSERT INTO user_inventory (user_id, item_id, quantidade, equipado ) VALUES (?, ?, ?, 1)`);
     for (const itemId of defaultItems) {
         stmt.run(userId, itemId, 1);
