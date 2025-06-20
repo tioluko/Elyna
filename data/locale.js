@@ -135,7 +135,7 @@ const ce = {
     vic: `Victory!`,
     dft: `Defeat...`,
     loot: `Loot`,
-    got: `got`,
+    got: `gained`,
     on: `in`,  //só "in"
     is_unc: `is unconscious`,
     wont_act: `won't act`,
@@ -184,7 +184,8 @@ const cf = {
     add_nau: `is further nauseated`,
     psn_dmg: `poison damage`,
     bld_dmg: `bleed damage`,
-    brn_dmg: `flame damage`
+    brn_dmg: `flame damage`,
+    acd_dmg: `acid damage`
 };
 
 module.exports = {

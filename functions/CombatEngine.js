@@ -109,6 +109,10 @@ class CombatEngine {
                 ...(effect ? [effect] : [])
             ];
 
+            const dtags = [
+                ...JSON.parse(defender.STATUS || '[]')
+            ];
+
             this.acerto = 0;
             this.dano = 0;
             this.danofinal = 0;
@@ -128,7 +132,7 @@ class CombatEngine {
 
             ////////ON ACTION MOVE EFFECT////////////////////////////////
             if (DEBUG) console.log('MOVE EFFECT:', effect);
-            for (const tag of tags) {this.effectTrigger("onAction", attacker, tag, this.log)}
+            for (const tag1 of tags) {this.effectTrigger("onAction", attacker, tag1, this.log)}
             /////////////////////////////////////////////
 
             /////////////////////////////////////////////
@@ -146,7 +150,7 @@ class CombatEngine {
                 /////////////////////////////////////////////////////////////////////
                 ////ATTACKER STATUS BEFORE HIT///
                 if (DEBUG) console.log('STATUS DO ATTACKER:', attacker.STATUS);
-                for (const tag of tags) {this.effectTrigger("onHitBefore", attacker, tag[0], this.log)}
+                for (const tag2 of tags) {this.effectTrigger("onHitBefore", attacker, tag2[0], this.log)}
                 /////////////////////////////////////////////////////////////////////
 
                 //Mensagem do Roll de acerto
@@ -172,8 +176,8 @@ class CombatEngine {
                     this.log.push(` ${attacker.nome} ${ce.miss}❌`);
                     if (hasStatus(defender, "FUGA")) {
                         this.log.push(`\n💨 **${defender.nome} ${ce.run}!**`);
+                        this.log.push('\n');
                     }
-                    this.log.push('\n');
                     break hitting;
                 }
                 ////Pega a parte do corpo atingida e RD da mesma///////////////
@@ -190,7 +194,7 @@ class CombatEngine {
                 /////////////////////////////////////////
                 ////////ON HIT MOVE EFFECT////////////////////////////////
                 if (DEBUG) console.log('HIT EFFECT:', effect);
-                for (const tag of tags) {this.effectTrigger("onHitEffect", defender, tag, this.log)}
+                for (const tag3 of tags) {this.effectTrigger("onHitEffect", defender, tag3, this.log)}
                 /////////////////////////////////////////
 
                 /////////////////////////////////////////
@@ -202,12 +206,23 @@ class CombatEngine {
                 else if (Math.floor(this.danofinal >= (stats.total(defender, "RES")*2))) addDmgTypeEffect(defender, aMove.ELE, this.log);
                 /////////////////////////////////////////
 
+                //////////////////////////////////
                 ////Se ultrapassou EQ, perde PR
                 if (Math.floor(this.dano * [bpRD[2]]) > defender.EQ) {
                     defender.PR -= 1;
                     this.log.push(`⚠️ **${defender.nome}** ${ce.bal}`);
                 }
                 //////////////////////////////////
+
+                //////////////////////////////////
+                ////////REFLECT DAMAGE EFFECT///////////////////
+                if (aMove.tipo === 1 && hasStatus(defender, "ACID")) {
+                    if (DEBUG) console.log('REFLECT EFFECT:', defender.STATUS);
+                    const acdmg = getStatusDuration(defender, "ACID");
+                    attacker.PV -= acdmg;
+                    this.log.push(`**${attacker.nome}** ${cf.tk} **${acdmg}** ${cf.acd_dmg}! 🧪`);
+                }
+                /////////////////////////////////////////
               }
             }
             ////Apply end round effects///////

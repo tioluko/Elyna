@@ -21,11 +21,22 @@ const CombatTriggers = {
             log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pr} ✨`);
             return;
         },
-        REC_PV: (entity, log) => {
+        REC_PV_MAG: (entity, log) => {
             const max = entity.MPV || 0;
             const rec = total(entity, "ESS") + (entity.NV * 2);
             entity.PV = Math.min(entity.PV + rec, max);
-            log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pv} ✨`);
+            if (hasStatus(entity, "POISON")) reduceStatus(entity, "POISON", entity.NV);
+            if (hasStatus(entity, "BLEED")) reduceStatus(entity, "BLEED", entity.NV);
+            log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
+            return;
+        },
+        REC_PV_NAT: (entity, log) => {
+            const max = entity.MPV || 0;
+            const rec = total(entity, "RES")* 2;
+            entity.PV = Math.min(entity.PV + rec, max);
+            if (hasStatus(entity, "POISON")) reduceStatus(entity, "POISON", entity.NV);
+            if (hasStatus(entity, "BLEED")) reduceStatus(entity, "BLEED", entity.NV);
+            log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
             return;
         },
         FUGA: (entity, log) => {
@@ -132,10 +143,27 @@ const CombatTriggers = {
     },
 
     onTurnEnd: {
+        NAT_REGEN: (entity, log) => {
+            const dmg = getStatusDuration(entity, "NAT_REGEN");
+            console.log("regen:", dmg)
+            entity.PV += dmg;
+            log.push(`**${entity.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
+            return;
+        },
+        REGEN: (entity, log) => {
+            const dmg = entity.NV;
+            console.log("regen:", dmg)
+            entity.PV += dmg;
+            reduceStatus(entity, "REGEN"); // reduz 1 turno
+            log.push(`**${entity.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
+            return;
+        },
         POISON: (entity, log) => {
-            entity.PV -= 1;
+            const dmg = Math.ceil(getStatusDuration(entity, "POISON")/6);
+            console.log("poison power:", dmg)
+            entity.PV -= dmg;
             reduceStatus(entity, "POISON"); // reduz 1 turno
-            log.push(`**${entity.nome}** ${cf.tk} **1** ${cf.psn_dmg}! 🤢`);
+            log.push(`**${entity.nome}** ${cf.tk} **${dmg}** ${cf.psn_dmg}! 🤢`);
             return;
         },
         BLEED: (entity, log) => {
@@ -144,6 +172,14 @@ const CombatTriggers = {
             entity.PV -= dmg;
             reduceStatus(entity, "BLEED"); // reduz 1 turno
             log.push(`**${entity.nome}** ${cf.tk} **${dmg}** ${cf.bld_dmg}! 🩸`);
+            return;
+        },
+        BURN: (entity, log) => {
+            const dmg = Math.ceil(getStatusDuration(entity, "BURN")/7);
+            console.log("burn power:", dmg)
+            entity.PV -= dmg;
+            reduceStatus(entity, "BURN"); // reduz 1 turno
+            log.push(`**${entity.nome}** ${cf.tk} **${dmg}** ${cf.brn_dmg}! 🔥`);
             return;
         }
     }
@@ -216,12 +252,12 @@ function addDmgTypeEffect (entity, ele, log, pow = 1 ){
                 addStatus(entity, "STUN", (3*pow));
             }return;
         }case "cr": {
-            if (!hasStatus(entity, "UNDEAD")) {
+            if (!hasStatus(entity, "UNDEAD")&&!hasStatus(entity, "PLANT")) {
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
                 addStatus(entity, "BLEED", (5*pow));
             }return;
         }case "pn": {
-            if (!hasStatus(entity, "UNDEAD")) {
+            if (!hasStatus(entity, "UNDEAD")&&!hasStatus(entity, "PLANT")) {
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
                 addStatus(entity, "BLEED", (5*pow));
             }return;
@@ -237,6 +273,7 @@ function addDmgTypeEffect (entity, ele, log, pow = 1 ){
             }return;
         }case "qm": {
             log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BURN") ? `${cf.add_brn}` : `${cf.is_brn}`));
+            if (hasStatus(entity, "PLANT")) addStatus(entity, "BURN", (5*pow));
             addStatus(entity, "BURN", (5*pow));
             return;
         }case "vt": {
