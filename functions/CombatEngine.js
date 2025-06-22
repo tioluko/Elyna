@@ -174,10 +174,6 @@ class CombatEngine {
                 ////Checa se acertou//////////////////////////
                 if (this.acerto < dificuldade && this.crit === 1) {
                     this.log.push(` ${attacker.nome} ${ce.miss}❌`);
-                    if (hasStatus(defender, "FUGA")) {
-                        this.log.push(`\n💨 **${defender.nome} ${ce.run}!**`);
-                        this.log.push('\n');
-                    }
                     break hitting;
                 }
                 ////Pega a parte do corpo atingida e RD da mesma///////////////
@@ -240,6 +236,7 @@ class CombatEngine {
             //this.log.push('\n');
             if (DEBUG) console.log("---");
             if (attacker.PV <= 0 || defender.PV <= 0) break;
+            if (hasStatus(defender, "FUGA")) this.log.push(`\n💨 **${defender.nome} ${ce.run}!**`);
         }
         ///Check if the battle is over//////
         const end = this.player.PV <= 0 || this.npc.PV <= 0 || hasStatus(this.player, "FUGA") ;

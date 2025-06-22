@@ -79,7 +79,7 @@ module.exports = {
                 //if (u.exBdpart3 !== "none") options.push("e3");
                 //if (u.exBdpart4 !== "none") options.push("e4");//just in case....
                 const choices = parts
-                .filter(p => npc["RD" + p] !== null)
+                .filter(p => npc["RD" + p[0]] !== null)
                 .map(p => ({ name: `${p[1]} (cost: ${p[2]}RP)`, value: p[0] }));
                 await interaction.respond([...choices].slice(0, 25));
             }
@@ -166,8 +166,18 @@ module.exports = {
                 const sent = await interaction.editReply(result);
                 lastCombatMessages.set(player.id, sent.id);
             } else {
-                // Finaliza a interação de forma silenciosa
-                await interaction.deleteReply();
+                // Finaliza a interação de forma segura
+                if (interaction.replied || interaction.deferred) {
+                    try {
+                        await interaction.deleteReply();
+                    } catch (err) {
+                        if (err.code === 10008) {
+                            console.warn('[ação] A mensagem da interação já não existe.');
+                        } else {
+                            console.error('[ação] Erro ao deletar a resposta:', err);
+                        }
+                    }
+                }
             }
 
             ///////////////////////////////////////

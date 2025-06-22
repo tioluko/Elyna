@@ -2,8 +2,15 @@ const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discor
 const { getUserData, updateUserData } = require('../../utils/db.js');
 const { generateMiniMapImage } = require('../../utils/ImageGen.js');
 const { getTile } = require('../../functions/MapReader.js');
-const { info } = require('../../data/locale.js');
+const { info, map } = require('../../data/locale.js');
 const mapa = require('../../data/map.json');
+
+function getMovementCost(tipo) {
+    if ([2, 3, 6].includes(tipo)) return 1;
+    if ([4, 5].includes(tipo)) return 2;
+    if ([7, 8, 9].includes(tipo)) return 3;
+    return "---";
+}
 
 module.exports = {
     cooldown: 5,
@@ -19,14 +26,14 @@ module.exports = {
     .setDescriptionLocalizations({ "pt-BR": "Para onde deseja ir?" })
     .setRequired(true)
     .addChoices(
-        { name: 'North', value: 'norte' },
-        { name: 'South', value: 'sul' },
-        { name: 'East', value: 'leste' },
-        { name: 'West', value: 'oeste' },
-        { name: 'North-east', value: 'nordeste' },
-        { name: 'North-west', value: 'noroeste' },
-        { name: 'South-east', value: 'sudeste' },
-        { name: 'South-west', value: 'sudoeste' },
+        { name: `North`, value: 'norte' },
+        { name: `South`, value: 'sul' },
+        { name: `East`, value: 'leste' },
+        { name: `West`, value: 'oeste' },
+        { name: `North-east`, value: 'nordeste' },
+        { name: `North-west`, value: 'noroeste' },
+        { name: `South-east`, value: 'sudeste' },
+        { name: `South-west`, value: 'sudoeste' },
     )
     ),
 
@@ -57,18 +64,52 @@ module.exports = {
         const tile = getTile(newX, newY);
         if (!tile) return interaction.reply('❌ Direção inválida ou fora do mapa!');
 
-        // Atualiza posição
-        updateUserData(user.id, { AREA: `${newX},${newY}` });
+        const moveCost = getMovementCost(tile.tipo);
+
+        if (typeof moveCost !== 'number') {
+            return interaction.reply(map.cant);
+        }
+
+        if (user.PE < moveCost) {
+            return interaction.reply(`:star: ${map.youneed} ${moveCost} ${map.sp} ${map.onlyhave} ${user.PE} :star:`);
+        }
+
+        // Pagar o custo e mover
+        updateUserData(user.id, {
+            AREA: `${newX},${newY}`,
+            PE: user.PE - moveCost
+        });
+
+        await interaction.deferReply();
 
         // Gera imagem do novo local
         const miniMapBuffer = await generateMiniMapImage(newX, newY, mapa);
         const file = new AttachmentBuilder(miniMapBuffer, { name: 'mapa.png' });
 
         const embed = new EmbedBuilder()
-        .setTitle(`🧭 Nova Área: ${tile.nome !== 'none' ? tile.nome : `Terreno ${tile.tipo}`}`)
-        .setDescription(`📌 Localização: (${newX}, ${newX})\n Tipo: ${tile.tipo}\n Rank: ${tile.rank}\n Ocupação: ${tile.ocup}\n Contaminação: ${tile.cont}`)
+        .setTitle(`🧭 Current Area: ${tile.nome !== 'none' ? tile.nome : `${map[`tipo${tile.tipo}`]}`}`)
+        .setDescription(
+            `📌 **${newX}, ${newY}**\n` +
+            `🌎 Type: **${map[`tipo${tile.tipo}`]}**\n` +
+            `🧱 Rank: **${tile.rank}**\n` +
+            `🏙️ Occupancy: **${tile.ocup}**\n` +
+            `🌀 Contamination: **${tile.cont}**\n` +
+            `🧩 Used ${map.sp}: ${moveCost}     **${map.sp} left: ${user.PE - moveCost} / ${user.MPE}**`
+        )
         .setImage('attachment://mapa.png');
 
-        await interaction.reply({ embeds: [embed], files: [file] });
+        await interaction.editReply({ embeds: [embed], files: [file] });
+
+        setTimeout(async () => {
+            try {
+                await interaction.deleteReply();
+            } catch (err) {
+                if (err.code === 10008) {
+                    console.warn('[deleteReply] Mensagem já não existe.');
+                } else {
+                    console.error('[deleteReply] Erro inesperado:', err);
+                }
+            }
+        }, 10_000);
     }
 };

@@ -44,7 +44,21 @@ const eq ={
     use: `You used`
 };
 const map ={
-    encounter: `is attacking you! Use **/act** to deal with it!`
+    encounter: `is attacking you! Use **/act** to deal with it!`,
+    cant: `:star: You can't cross this terrain... :star:`,
+    youneed: `You need`,
+    onlyhave: `to cross this terrain, you only have`,
+    tipo0: `Deep sea`,
+    tipo1: `Sea`,
+    tipo2: `Beach`,
+    tipo3: `Green plains`,
+    tipo4: `Forest`,
+    tipo5: `Swamp`,
+    tipo6: `Dry plains`,
+    tipo7: `Mountain`,
+    tipo8: `Frozen plains`,
+    tipo9: `Desert`,
+    sp: "SP"
 };
 const ficha = {
     //Itens do menu ficha

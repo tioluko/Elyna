@@ -26,6 +26,13 @@ module.exports = {
 
         stats.fullheal(user); //temporario
 
+        //`:star: Found a fruit bearing tree :star: \n\n You magaged to collect X fruits from it! :apple:`
+        //`:star: Found some edible mushrooms :star: \n\n You magaged to collect X mushrooms! :brown_mushroom:`
+        //`:star: Found some medicinal herbs :star: \n\n You magaged to harvest X of them! :herb:`
+        //`:star: Found some medicinal roots :star: \n\n You magaged to harvest X of them! :ginger_root:`
+        //`:star: Found some rare medicinal flowers :star: \n\n You magaged to harvest X of them! :blossom:`
+        //
+
         // 🔍 Busca NPCs compatíveis no mapa
         const stmt = db.prepare(`
         SELECT n.* FROM npc_encounters e

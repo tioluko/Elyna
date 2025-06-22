@@ -21,13 +21,22 @@ module.exports = {
         //const [x, y] = [7,15];
         const tile = getTile(x, y);
 
+        await interaction.deferReply();
+
         const miniMapBuffer = await generateMiniMapImage(x, y, mapa);
 
         const file = new AttachmentBuilder(miniMapBuffer, { name: 'mapa.png' });
 
         const embed = new EmbedBuilder()
-        .setTitle(`🧭 Área Atual: ${tile.nome !== 'none' ? tile.nome : `Terreno ${tile.tipo}`}`)
-        .setDescription(`📌 Localização: (${x}, ${y})\n Tipo: ${tile.tipo}\n Rank: ${tile.rank}\n Ocupação: ${tile.ocup}\n Contaminação: ${tile.cont}`)
+        .setTitle(`🧭 Current Area: ${tile.nome !== 'none' ? tile.nome : `${map[`tipo${tile.tipo}`]}`}`)
+        .setDescription(
+            `📌 **${x}, ${y}**\n` +
+            `🌎 Type: **${map[`tipo${tile.tipo}`]}**\n` +
+            `🧱 Rank: **${tile.rank}**\n` +
+            `🏙️ Occupancy: **${tile.ocup}**\n` +
+            `🌀 Contamination: **${tile.cont}**\n` +
+            `🧩 **${map.sp}: ${user.PE} / ${user.MPE}**`
+        )
         .setImage('attachment://mapa.png');
 
         /*
@@ -46,6 +55,18 @@ module.exports = {
 
         */
 
-        await interaction.reply({ embeds: [embed], files: [file] });
+        await interaction.editReply({ embeds: [embed], files: [file] });
+
+        setTimeout(async () => {
+            try {
+                await interaction.deleteReply();
+            } catch (err) {
+                if (err.code === 10008) {
+                    console.warn('[deleteReply] Mensagem já não existe.');
+                } else {
+                    console.error('[deleteReply] Erro inesperado:', err);
+                }
+            }
+        }, 10_000);
     }
 }
