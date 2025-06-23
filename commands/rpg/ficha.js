@@ -51,6 +51,7 @@ module.exports = {
       legs: `🦵 **${st.rd} **${u.RDpd + u.RD},${u.RDpe + u.RD}`,
       rhand: "🤚 ",
       lhand: "✋ ",
+      hands: "👐 ",
       acc: "🔸 ",
     };
     const perkorder = ["racial", "natural", "sobrenatural"];
@@ -61,6 +62,7 @@ module.exports = {
       "legs",
       "rhand",
       "lhand",
+      "hands",
       "acc",
     ];
     const equipped = {};
@@ -91,6 +93,17 @@ module.exports = {
       }
     }
     const equipList = equipSlots
+      .filter((slot, _, arr) => {
+        // Se houver um item de duas mãos, pule rhand e lhand
+        if (equipped.hands) {
+          if (slot === 'rhand' || slot === 'lhand') return false;
+        }
+
+        // Se NÃO houver item 2hand, não mostre slot "hands"
+        if (!equipped.hands && slot === 'hands') return false;
+
+        return true;
+      })
       .map((slot) => {
         if (slot === "acc") {
           const accs = equipped.acc || [];

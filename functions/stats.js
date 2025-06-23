@@ -97,13 +97,13 @@ function fullheal(u) {
   updateUserData(u.id, updates);
 }
 
-function handleSkillCost(user, move, pr, fc) {
+function handleSkillCost(user, move, pr = null, fc = null) {
 
-  if (DEBUG) console.log(move.custoPV + move.custoPM + move.custoPR + pr + fc);
+  if (DEBUG) console.log(move.custoPV,",",move.custoPM,",",move.custoPR,",",pr,",",fc);
   if ( move.custoPV + move.custoPM + move.custoPR + pr + fc === 0) return true;
 
   const fcost = !fc ? 0 : fc === "cb" ? 2 : 1;
-  console.log("custo foco: ",fcost);
+  if (DEBUG) console.log("custo foco: ",fcost);
   if ( user.PV > move.custoPV && user.PM >= move.custoPM && user.PR >= move.custoPR + pr + fcost) {
     user.PV -= move.custoPV;
     user.PM -= move.custoPM;

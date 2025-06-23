@@ -315,7 +315,13 @@ class CombatEngine {
                 move:getMoveById(98)
             };
         }
-        const move = getMoveById(id);
+        const selectedMove = getMoveById(id);
+        const can_use = stats.handleSkillCost(npc, selectedMove);
+
+        // Fallback para move_1 se não puder pagar
+        const fallbackMove = getMoveById(opts[0][0]);
+        const move = can_use ? selectedMove : fallbackMove;
+
 
         if (mods) {
             try {
