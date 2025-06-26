@@ -2,6 +2,7 @@ const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discor
 const { getUserData, updateUserData } = require('../../utils/db.js');
 const { generateMiniMapImage } = require('../../utils/ImageGen.js');
 const { getLocalGrid, getTile } = require('../../functions/MapReader.js');
+const { barCreate } = require('../../functions/stats.js');
 const { info, map } = require("../../data/locale.js");
 const mapa = require('../../data/map.json');
 
@@ -34,10 +35,11 @@ module.exports = {
             `🌎 Type: **${map[`tipo${tile.tipo}`]}**\n` +
             `🧱 Rank: **${tile.rank}**\n` +
             `🏙️ Occupancy: **${tile.ocup}**\n` +
-            `🌀 Contamination: **${tile.cont}**\n` +
-            `🧩 **${map.sp}: ${user.PE} / ${user.MPE}**`
+            `🌀 Contamination: **${tile.cont}**\n\n` +
+            `${barCreate(user,"PE")} **${map.sp}: **${user.PE} / ${user.MPE}`
         )
-        .setImage('attachment://mapa.png');
+        .setImage('attachment://mapa.png')
+        .setFooter({text: interaction.user.username,iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,});
 
         /*
          Type wilderness/village  Name(if there is one)*

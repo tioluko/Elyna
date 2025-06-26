@@ -56,7 +56,7 @@ module.exports = {
         try {
             mods = JSON.parse(item.mods || '{}');
         } catch (err) {
-            return interaction.reply({ content: '❌ Erro ao ler os efeitos do item.', ephemeral: true });
+            return interaction.reply('❌ Error reading item effects.');
         }
 
         const updatedUser = { ...user };
@@ -99,7 +99,18 @@ module.exports = {
             db.prepare(`DELETE FROM user_inventory WHERE id = ?`).run(row.id);
         }
 
-        return interaction.reply(`${eq.put} **${item.nome}**\n${log.map(e => `• ${e}`).join('\n')}`);
+        return interaction.reply(`${eq.use} **${item.nome}**\n${log.map(e => `• ${e}`).join('\n')}`).then(() =>
+        setTimeout(async () => {
+            try {
+                await interaction.deleteReply();
+            } catch (err) {
+                if (err.code === 10008) {
+                    console.warn('[deleteReply] Mensagem já não existe.');
+                } else {
+                    console.error('[deleteReply] Erro inesperado:', err);
+                }
+            }
+        }, 10_000));
     }
 };
 

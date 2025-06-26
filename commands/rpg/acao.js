@@ -122,7 +122,7 @@ module.exports = {
             const can_use = stats.handleSkillCost(player, selected, pr, fc);
             if (DEBUG) console.log("PM/PR antes>",player.PM, player.PR, can_use);
             if (!can_use){
-                return interaction.reply(act.cant_pay);
+                return interaction.reply({ content: act.cant_pay, ephemeral: true });
             }
 
             if (DEBUG) console.log(fc);

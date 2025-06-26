@@ -9,6 +9,7 @@ const info = {
     character_created: `:star: Rejoice, your character is born! :star:\n\nYou can now use the following commands to customize it:\n**/name** Change your name.\n**/avatar** Change your image.\n**/bp** Invest your character points (BPs)\n**/pp** Invest your skill points (PPs)\n**/profile** Display your entire character sheet`,
     set_name: `Your character name is`,
     on_event: `Impossible, resolve your current situation first ( /act )`,
+    spam: `:star: Calm down buddy... I need to breathe between commands :star:`,
 
     //Mensagens de erro erro bug etc
     _combat_not_found_: `⚠️ Combat not found or in an invalid state.`,
@@ -41,7 +42,7 @@ const eq ={
     inv_opt: `Invalid option`,
     put: `You equipped`,
     off: `You removed`,
-    use: `You used`
+    use: `You consumed`
 };
 const map ={
     encounter: `is attacking you! Use **/act** to deal with it!`,

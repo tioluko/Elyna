@@ -1,13 +1,14 @@
 const { Events, Collection, MessageFlags } = require('discord.js');
 const { getUserData, updateUserData, getUserMoves } = require('../utils/db');
 const pointMenus = require('../functions/pointMenus');
+const { info } = require('../data/locale.js');
 
 module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
 
 		//  Suporte ao autocomplete do comando /ação
-		if (interaction.isAutocomplete()) {/*
+		/*if (interaction.isAutocomplete()) {
 			const focused = interaction.options.getFocused();
 			const userId = interaction.user.id;
 			const user = getUserData(userId);/*
@@ -27,6 +28,7 @@ module.exports = {
 
 				return interaction.respond(results.slice(0, 25));
 			}*/
+		if (interaction.isAutocomplete()) {
 			const command = interaction.client.commands.get(interaction.commandName);
 			if (command && typeof command.autocomplete === 'function') {
 				return command.autocomplete(interaction);
@@ -72,7 +74,7 @@ module.exports = {
 
 	  	if (now < expirationTime) {
 		  	const expiredTimestamp = Math.round(expirationTime / 1000);
-		  	return interaction.reply({ content: `:star: Calma querido amigo, espera um pouquinho... Eu não quero explodir :star:`, flags: MessageFlags.Ephemeral });
+		  	return interaction.reply({ content: info.spam, flags: MessageFlags.Ephemeral });
 	  	}
 	  }
 

@@ -3,6 +3,7 @@ const { getUserData, updateUserData } = require('../../utils/db.js');
 const { generateMiniMapImage } = require('../../utils/ImageGen.js');
 const { getTile } = require('../../functions/MapReader.js');
 const { info, map } = require('../../data/locale.js');
+const { barCreate } = require('../../functions/stats.js');
 const mapa = require('../../data/map.json');
 
 function getMovementCost(tipo) {
@@ -13,7 +14,7 @@ function getMovementCost(tipo) {
 }
 
 module.exports = {
-    cooldown: 5,
+    cooldown: 2,
     data: new SlashCommandBuilder()
     .setName('move')
     .setDescription('Travel to another zone')
@@ -42,6 +43,7 @@ module.exports = {
         if (!user) {
             return interaction.reply(info.no_character);
         }
+        if (user.EVENT !== 'none') return interaction.reply({ content: info.on_event, ephemeral: true });
 
         const dir = interaction.options.getString('direcao');
         const directions = {
@@ -93,8 +95,8 @@ module.exports = {
             `🌎 Type: **${map[`tipo${tile.tipo}`]}**\n` +
             `🧱 Rank: **${tile.rank}**\n` +
             `🏙️ Occupancy: **${tile.ocup}**\n` +
-            `🌀 Contamination: **${tile.cont}**\n` +
-            `🧩 Used ${map.sp}: ${moveCost}     **${map.sp} left: ${user.PE - moveCost} / ${user.MPE}**`
+            `🌀 Contamination: **${tile.cont}**\n\n` +
+            `${barCreate(user,"PE")} **${map.sp}: **${user.PE} / ${user.MPE}`
         )
         .setImage('attachment://mapa.png');
 
