@@ -14,13 +14,16 @@ function equip(userId, invId) {
     let slot = inv.slot;
 
     // ← Pegue os itens equipados nas mãos ANTES de desequipar qualquer coisa
-    let prevHandItems = db.prepare(`
-    SELECT ui.id, i.move_id FROM user_inventory ui
-    JOIN items i ON i.id = ui.item_id
-    WHERE ui.user_id = ? AND ui.equipado = 1
-    AND ui.slot_override IN ('rhand', 'lhand', 'hands')
-    AND ui.id != ?
-    `).all(userId, invId);
+    let prevHandItems = [];
+    if (['hand', '2hand'].includes(inv.slot)) {
+        prevHandItems = db.prepare(`
+        SELECT ui.id, i.move_id FROM user_inventory ui
+        JOIN items i ON i.id = ui.item_id
+        WHERE ui.user_id = ? AND ui.equipado = 1
+        AND ui.slot_override IN ('rhand', 'lhand', 'hands')
+        AND ui.id != ?
+        `).all(userId, invId);
+    }
 
     // Escolher slot correto
     if (slot === 'hand') {
@@ -43,12 +46,15 @@ function equip(userId, invId) {
     WHERE user_id = ? AND slot_override = ? AND id != ?
     `).run(userId, slot, invId);
 
-    for (const item of prevHandItems) {
-        if (item.move_id) {
-            db.prepare(`
-            DELETE FROM user_moves
-            WHERE user_id = ? AND origem = ?
-            `).run(userId, `equip:${item.id}`);
+    // ← Só remove moves se era item de mão
+    if (['hand', '2hand'].includes(inv.slot)) {
+        for (const item of prevHandItems) {
+            if (item.move_id) {
+                db.prepare(`
+                DELETE FROM user_moves
+                WHERE user_id = ? AND origem = ?
+                `).run(userId, `equip:${item.id}`);
+            }
         }
     }
 
