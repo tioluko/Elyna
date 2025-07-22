@@ -61,6 +61,10 @@ const map ={
     tipo9: `Desert`,
     sp: "SP"
 };
+const cft ={
+    youneed: `You need`,
+    onlyhave: `to craft an item, you only have`,
+};
 const ficha = {
     //Itens do menu ficha
     acc: `Accessories`,
@@ -224,6 +228,7 @@ module.exports = {
     jd,
     eq,
     map,
+    cft,
     st,
     act,
     ce,

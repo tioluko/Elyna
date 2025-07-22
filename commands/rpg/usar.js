@@ -99,6 +99,7 @@ module.exports = {
             db.prepare(`DELETE FROM user_inventory WHERE id = ?`).run(row.id);
         }
 
+        console.log(`${eq.use} **${item.nome}**\n${log.map(e => `• ${e}`).join('\n')}`); // log
         return interaction.reply(`${eq.use} **${item.nome}**\n${log.map(e => `• ${e}`).join('\n')}`).then(() =>
         setTimeout(async () => {
             try {

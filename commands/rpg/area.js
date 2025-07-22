@@ -56,6 +56,7 @@ module.exports = {
          4 This place is overwhelmed with anomaly;
 
         */
+        console.log(`${x},${y}`); // log
 
         await interaction.editReply({ embeds: [embed], files: [file] });
 

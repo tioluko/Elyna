@@ -262,7 +262,7 @@ class CombatEngine {
 
         if (end) {
             updateUserData(this.player.id, {
-                PV: this.player.PV,
+                PV: defeat || draw ? 1 : this.player.PV,
                 PM: this.player.PM,
                 PR: this.player.MPR,
                 //STATUS: end ? "none" : user.STATUS,

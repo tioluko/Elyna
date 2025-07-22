@@ -6,6 +6,7 @@ const { info } = require('../data/locale.js');
 module.exports = {
 	name: Events.InteractionCreate,
 	async execute(interaction) {
+		if (!interaction.isAutocomplete() && !interaction.isButton()) console.log(`---${ interaction.commandName } (${interaction.user.id})`); // log
 
 		//  Suporte ao autocomplete do comando /ação
 		/*if (interaction.isAutocomplete()) {

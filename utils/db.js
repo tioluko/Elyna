@@ -46,7 +46,7 @@ function initUserMoves(userId) {
     for (const moveId of defaultMoves) {
         stmt.run(userId, moveId);
     }
-    if (DEBUG) console.log('[initUserPerks] Inserindo ações iniciais para o usuário', userId);
+    if (DEBUG) console.log('[initUserMoves] Inserindo ações iniciais para o usuário', userId);
 }
 function initUserPerks(userId) {
     const defaultPerks = [1]; // Preencha com perks iniciais se quiser
@@ -58,12 +58,21 @@ function initUserPerks(userId) {
     if (DEBUG) console.log('[initUserPerks] Inserindo perks iniciais para o usuário', userId);
 }
 function initUserInventory(userId) {
-    const defaultItems = [30]; // [{ id: 1, quantidade: 2 }]
-    const stmt = db.prepare(`INSERT INTO user_inventory (user_id, item_id, quantidade, equipado ) VALUES (?, ?, ?, 1)`);
+    const defaultItems = [15]; // [{ id: 1, quantidade: 2 }]
+    const defaultEquip = [30]; //
+    //const stmt = db.prepare(`INSERT INTO user_inventory (user_id, item_id, quantidade, equipado ) VALUES (?, ?, ?, 1)`);
+    //for (const itemId of defaultEquip) {
+    //    stmt.run(userId, itemId, 1);
+    //}
+    const stmt = db.prepare(`INSERT INTO user_inventory (user_id, item_id, quantidade, equipado ) VALUES (?, ?, ?, ?)`);
+    stmt.run(userId, 1, 10, 0);
     for (const itemId of defaultItems) {
-        stmt.run(userId, itemId, 1);
+        stmt.run(userId, itemId, 1, 0);
     }
-    if (DEBUG) console.log('[initUserPerks] Inserindo itens iniciais para o usuário', userId);
+    for (const itemId of defaultEquip) {
+        stmt.run(userId, itemId, 1, 1);
+    }
+    if (DEBUG) console.log('[initUserInventory] Inserindo itens iniciais para o usuário', userId);
 }
 // Busca dados no inventorio do usuário
 function getUserInventory(userId) {

@@ -15,7 +15,7 @@ module.exports = {
     .setDescriptionLocalizations({ "pt-BR": "Explora a area em que você se encontra" }),
 
     async execute(interaction) {
-        const user = getUserData(interaction.user.id);
+        let user = getUserData(interaction.user.id);
         if (!user) {
             return interaction.reply(info.no_character);
         }
@@ -28,7 +28,13 @@ module.exports = {
 
         //stats.fullheal(user); //temporario
 
+        if (user.PE < tile.rank) {
+            return interaction.reply(`:star: ${map.youneed} ${tile.rank} ${map.sp} ${map.onlyhave} ${user.PE} :star:`);
+        }
+
+        // Pagar o custo
         updateUserData(user.id, {PE: user.PE - tile.rank});
+
 
         function rollPercent(chance) {
             return Math.random() * 100 < chance;
@@ -90,8 +96,8 @@ module.exports = {
             //}
 
             try {
-                console.log(result.msg); // texto final para enviar
-                console.log(`Adicionar ao inventário: ${result.qtd}x ${result.itemNome} (ID ${result.itemId})`);
+                user = getUserData(interaction.user.id);
+                console.log(`${result.msg}`); // log
 
                 const embed = new EmbedBuilder()
                 .setDescription(`**${user.nome}**`)

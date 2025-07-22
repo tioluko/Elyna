@@ -25,6 +25,7 @@ module.exports = {
         }
         updateUserData(user.id, { nome: nome });
 
+        console.log(`${user.nome}->${nome}`); // log
         interaction.reply(`:star: O nome do seu personagem é **${nome}** :star:`);
     }
 }

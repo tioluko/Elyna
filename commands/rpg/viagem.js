@@ -39,7 +39,7 @@ module.exports = {
     ),
 
     async execute(interaction) {
-        const user = getUserData(interaction.user.id);
+        let user = getUserData(interaction.user.id);
         if (!user) {
             return interaction.reply(info.no_character);
         }
@@ -81,6 +81,7 @@ module.exports = {
             AREA: `${newX},${newY}`,
             PE: user.PE - moveCost
         });
+        user = getUserData(interaction.user.id);
 
         await interaction.deferReply();
 
@@ -99,6 +100,8 @@ module.exports = {
             `${barCreate(user,"PE")} **${map.sp}: **${user.PE} / ${user.MPE}`
         )
         .setImage('attachment://mapa.png');
+
+        console.log(`${currX},${currY}-> ${newX},${newY}`); // log
 
         await interaction.editReply({ embeds: [embed], files: [file] });
 

@@ -100,6 +100,7 @@ module.exports = {
         const startMem3 = process.memoryUsage().heapUsed;
 
         const user = getUserData(interaction.user.id);
+
         const id = interaction.options.getString('action');
         if (!id || id.startsWith('__BLOCK')) {
             return interaction.reply({ content: act.inv_opt, ephemeral: true });

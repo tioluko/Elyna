@@ -40,6 +40,7 @@ module.exports = {
                     const embed = new EmbedBuilder()
                     .setDescription(`:star: ${ava.this_is} ${user.nome}: :star:`)
                     .setImage(url);
+                    console.log(`${user.image}->${url}`); // log
                     interaction.reply({ embeds: [embed] }).then(() =>
                     setTimeout(
                         () => interaction.deleteReply(),
