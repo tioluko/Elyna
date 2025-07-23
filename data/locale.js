@@ -64,6 +64,8 @@ const map ={
 const cft ={
     youneed: `You need`,
     onlyhave: `to craft an item, you only have`,
+    success: `You successfully crafted`,
+    fail: `You failed to craft it...`,
 };
 const ficha = {
     //Itens do menu ficha
@@ -123,8 +125,8 @@ const st = {
     ocu: "Occultism",
     eng: "Engineering",
     inf: "Stealth",
-    ifm: "Informática",
-    inv: "Computing",
+    ifm: "Computing",
+    inv: "Investigation",
     mag: "Spellcasting",
     med: "Medicine",
     pol: "Politics",

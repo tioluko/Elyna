@@ -136,7 +136,7 @@ module.exports = {
         const passed = totalCheck >= recipe.dt;
 
         let resultMsg = `🎲 Craft Roll: ** ${totalCheck} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${userSkill+user.INT}} \u2003 DT:**${recipe.dt}**\n\n`;
-        resultMsg += passed ? `:star: Você criou **${recipe.name}** com sucesso! :star:` : `❌ Você não conseguiu criar o item.`;
+        resultMsg += passed ? `:star: ${cft.success} **x1 ${recipe.name}** :star:` : `❌ ${cft.fail}`;
 
         if (passed) {
             addxp(user, Math.ceil(recipe.dt/10));

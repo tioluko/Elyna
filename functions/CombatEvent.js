@@ -1,5 +1,6 @@
 const { DEBUG } = require('../config.js');
 const { db, getUserData, getUserPerks } = require('../utils/db.js');
+const { addStatus } = require('../functions/CombatEffects.js');
 const { npcInitialize } = require('../functions/stats.js');
 const stats = require('./stats');
 
@@ -7,6 +8,7 @@ function createCombat(userId, npcId) {
 
     const user = getUserData(userId);
     if (!user) throw new Error('Usuário não encontrado');
+    stats.updatePerkMoves(userId);
     stats.modApply(user); // aplica perks/equips etc
 
     const npc = db.prepare('SELECT * FROM npcs WHERE id = ?').get(npcId);

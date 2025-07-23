@@ -35,6 +35,7 @@ module.exports = {
     console.log(perks);
     // Atualiza os valores derivados
     stats.modApply(user);
+    stats.updatePerkMoves(user.id);
     stats.addxp(user, 0);
     //updateUserData(user.id, stats.calculateStats(user));
     stats.update(user);
@@ -163,19 +164,37 @@ module.exports = {
         embeds.push(new EmbedBuilder()
         .setColor("Blurple")
         .setTitle(user.nome)
-        .setDescription(`**${st.nv} :** ${user.NV} \n **XP :** ${user.XP} / ${user.RXP}`,)
+        .setDescription(`**${st.nv}:** ${user.NV} \n**XP:** ${user.XP} / ${user.RXP}`)
         .setThumbnail(user.image)
-        .setFooter({text: interaction.user.username,iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,})
+        .setFooter({
+          text: interaction.user.username,
+          iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,
+        })
         .addFields(
-          {name: `***${ficha.base_stats}***`,value: `*${st.pc}s:* ***${user.PC}***`,},
-          {name: "\u200B",value: `💪 ${st.for}: \n 🤸 ${st.agi}: \n 🧱 ${st.res}: \n 🧠 ${st.int}: \n 😎 ${st.car}: \n ✨ ${st.ess}: \n 🌀 ${st.sin}:`,inline: true,},
-          {name: "\u200B",value: `**${u.FOR} \n ${u.AGI} \n ${u.RES} \n ${u.INT} \n ${u.CAR} \n ${u.ESS} \n ${u.SIN}**`,inline: true,},
-          {name: "\u200B",value: `\n❤️ **${st.hp}: ** ${u.MPV} / ${u.PV} \n${bar[0]}\n💧 **${st.mp}: **${u.MPM} / ${u.PM} \n${bar[1]}\n🧩 **${st.sp}: ** ${u.MPE} / ${u.PE} \n${bar[2]}\n⚡ **${st.rp}: ** ${u.MPR} / ${u.PR}\n${bar[3]}`,inline: true,},
-          {name: "\u200B", value: `***${ficha.secondary_stats}***` },
-          {name: "\u200B",value: `**${st.rm}:** \n **${st.gm}:** \n **${st.re}:** \n **${st.mov}:** \n **${st.eq}:** \n **${st.per}:**`,inline: true,},
-          {name: "\u200B",value: `${u.RM} \n ${u.GM} \n ${u.RE} \n ${u.MOV} \n ${u.EQ} \n ${u.PER}`,inline: true,},
-          {name: "\u200B",value: `-# (${st.rm_}) \n-# (${st.gm_}) \n-# (${st.re_}) \n-# (${st.mov_}) \n-# (${st.eq_}) \n-# (${st.per_})`,inline: true,},
-          {name: "\u200B", value: "\u200B" },
+          {name: `***${ficha.base_stats}*** [ *${st.pc}s:* ***${user.PC}*** ]`,
+           value:
+            `💪 **${st.for}**: ${u.FOR}\n` +
+            `🤸 **${st.agi}**: ${u.AGI}\n` +
+            `🧱 **${st.res}**: ${u.RES}\n` +
+            `🧠 **${st.int}**: ${u.INT}\n` +
+            `😎 **${st.car}**: ${u.CAR}\n` +
+            `✨ **${st.ess}**: ${u.ESS}\n` +
+            `🌀 **${st.sin}**: ${u.SIN}`
+
+          },
+          {name: `❤️ ${st.hp}: ${u.MPV} / ${u.PV}`, value: `${bar[0]}`},
+          {name: `💧 ${st.mp}: ${u.MPM} / ${u.PM}`, value: `${bar[1]}`},
+          {name: `🧩 ${st.sp}: ${u.MPE} / ${u.PE}`, value: `${bar[2]}`},
+          {name: `⚡ ${st.rp}: ${u.MPR} / ${u.PR}`, value: ``},
+          {name: `***${ficha.secondary_stats}***`,
+            value:
+            `**${st.rm}**: ${u.RM} (${st.rm_})\n` +
+            `**${st.gm}**: ${u.GM} (${st.gm_})\n` +
+            `**${st.re}**: ${u.RE} (${st.re_})\n` +
+            `**${st.mov}**: ${u.MOV} (${st.mov_})\n` +
+            `**${st.eq}**: ${u.EQ} (${st.eq_})\n` +
+            `**${st.per}**: ${u.PER} (${st.per_})`
+          },
         ),
         );
         else if (i == 1)
@@ -186,11 +205,28 @@ module.exports = {
           .setThumbnail(user.image)
           .setFooter({text: interaction.user.username,iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,})
           .addFields(
-            {name: `***${ficha.skills}***`,value: `*${st.pp}s:* ***${user.PP}***`,},
-            {name: "\u200B",value: `✊ **${st.des}:** \n🗡️ **${st.arb}:** \n🏹 **${st.arq}:** \n🔫 **${st.adf}:** \n🏋️ **${st.atl}:** \n🎭 **${st.art}:** \n🧬 **${st.bio}:** \n🧮 **${st.exa}:** \n📜 **${st.hum}:** \n🔮 **${st.ocu}:** \n🛠️ **${st.eng}:** \n🕵️ **${st.inf}:** \n💻 **${st.ifm}:** \n🔍 **${st.inv}:** \n🪄  **${st.mag}:** \n⚕️ **${st.med}:** \n🗣️ **${st.pol}:** \n🫢 **${st.sub}:** \n🚗 **${st.vei}:**`,inline: true,},
-            {name: "\u200B",value: `${user.Des} \n ${user.Arb} \n ${user.Arq} \n ${user.Adf} \n ${user.Atl} \n ${user.Art} \n ${user.Bio} \n ${user.Exa} \n ${user.Hum} \n ${user.Ocu} \n ${user.Eng} \n ${user.Inf} \n ${user.Ifm} \n ${user.Inv} \n ${user.Mag} \n ${user.Med} \n ${user.Pol} \n ${user.Sub} \n ${user.Vei}`,inline: true,},
-            {name: "\u200B", value: "\u200B", inline: true },
-            {name: "\u200B", value: "\u200B" },
+            {name: `***${ficha.skills}***  [ *${st.pp}s:* ***${user.PP}*** ]`,
+            value:
+            `✊ **${st.des}**: ${user.Des}\n` +
+            `🗡️ **${st.arb}**: ${user.Arb}\n` +
+            `🏹 **${st.arq}**: ${user.Arq}\n` +
+            `🔫 **${st.adf}**: ${user.Adf}\n` +
+            `🏋️ **${st.atl}**: ${user.Atl}\n` +
+            `🎭 **${st.art}**: ${user.Art}\n` +
+            `🧬 **${st.bio}**: ${user.Bio}\n` +
+            `🧮 **${st.exa}**: ${user.Exa}\n` +
+            `📜 **${st.hum}**: ${user.Hum}\n` +
+            `🔮 **${st.ocu}**: ${user.Ocu}\n` +
+            `🛠️ **${st.eng}**: ${user.Eng}\n` +
+            `🕵️ **${st.inf}**: ${user.Inf}\n` +
+            `💻 **${st.ifm}**: ${user.Ifm}\n` +
+            `🔍 **${st.inv}**: ${user.Inv}\n` +
+            `🪄 **${st.mag}**: ${user.Mag}\n` +
+            `⚕️ **${st.med}**: ${user.Med}\n` +
+            `🗣️ **${st.pol}**: ${user.Pol}\n` +
+            `🫢 **${st.sub}**: ${user.Sub}\n` +
+            `🚗 **${st.vei}**: ${user.Vei}`
+            },
           ),
           );
           else if (i == 2)

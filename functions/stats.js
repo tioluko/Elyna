@@ -277,6 +277,32 @@ function barCreate(user, type) {
   }
 }
 
+function updatePerkMoves(userId) {
+  // 1. Remove todos os moves de origem de perk
+  db.prepare(`
+  DELETE FROM user_moves
+  WHERE user_id = ? AND origem LIKE 'perk:%'
+  `).run(userId);
+
+  // 2. Busca perks com move
+  const perks = db.prepare(`
+  SELECT up.perk_id, p.move_id
+  FROM user_perks up
+  JOIN perks p ON p.id = up.perk_id
+  WHERE up.user_id = ? AND p.move_id IS NOT NULL
+  `).all(userId);
+
+  // 3. Reinsere os moves
+  const insert = db.prepare(`
+  INSERT INTO user_moves (user_id, move_id, origem, mods)
+  VALUES (?, ?, ?, '{}')
+  `);
+
+  for (const perk of perks) {
+    insert.run(userId, perk.move_id, `perk:${perk.perk_id}`);
+  }
+}
+
 module.exports = {
   createNewUser,
   update,
@@ -290,5 +316,6 @@ module.exports = {
   total,
   getTotalStats,
   npcInitialize,
-  barCreate
+  barCreate,
+  updatePerkMoves
 };

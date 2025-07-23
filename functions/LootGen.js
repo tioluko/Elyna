@@ -51,7 +51,7 @@ function generateLoot({
         // Busca item real no banco
         const item = getRandomItemFromDB({
             itemType,
-            tier: finalTier,
+            comp: (finalTier*300),
             slot,
             itemIdWhitelist:
             itemType === 'value' ? valuableIds :
@@ -123,13 +123,14 @@ function processLootFromNPC(npc) {
     //return drops;
 }
 
-function getRandomItemFromDB({ itemType, tier, slot, itemIdWhitelist = [] }) {
+function getRandomItemFromDB({ itemType, comp, slot, itemIdWhitelist = [] }) {
     let query = `
     SELECT * FROM items
     WHERE tipo = ?
-    AND tier = ?
+    AND comp <= ?
     `;
-    const params = [itemType, tier];
+
+    const params = [itemType, comp];
 
     if (slot && slot !== 'none') {
         query += ` AND slot = ?`;

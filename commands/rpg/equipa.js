@@ -33,7 +33,6 @@ module.exports = {
         .filter(i => i.tipo === 'equip' && Number(i.equipado) !== 1)
         .filter(i => i.nome.toLowerCase().includes(focused))
         .map(i => ({ name: i.nome, value: i.id }));
-        console.log(inv);
 
         await interaction.respond(options.slice(0, 25));
     },
