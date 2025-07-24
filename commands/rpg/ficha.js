@@ -26,9 +26,7 @@ module.exports = {
   async execute(interaction) {
     const user = getUserData(interaction.user.id);
     //console.log('[1] user.modCAR (antes modApply):', user.modCAR);
-    if (!user) {
-      return interaction.reply(info.no_character);
-    }
+    if (!user) return interaction.reply({ content: info.no_character , ephemeral: true });
 
     const perks = getUserPerks(interaction.user.id);
     const inv = getUserInventory(interaction.user.id);

@@ -3,6 +3,7 @@ const { db, updateUserData, getUserData, getUserInventory } = require('../../uti
 const { recipes } = require('../../data/recipes.js');
 const { barCreate, addxp } = require('../../functions/stats.js');
 const { info, eq, st, cft } = require('../../data/locale.js');
+const block = require('../../utils/block.js');
 
 module.exports = {
     cooldown: 1,
@@ -27,11 +28,13 @@ module.exports = {
 
     async autocomplete(interaction) {
         const user = getUserData(interaction.user.id);
-        function blockAutocomplete(message) {
-            return [{ name: `🚫 ${message}`, value: -1 }];
-        }
-        if (!user) return interaction.respond(blockAutocomplete(eq.no_char));
-        if (user.EVENT !== 'none') return interaction.respond(blockAutocomplete(eq.on_event));
+        //function blockAutocomplete(message) {
+        //    return [{ name: `🚫 ${message}`, value: -1 }];
+        //}
+        //if (!user) return interaction.respond(blockAutocomplete(eq.no_char));
+        //if (user.EVENT !== 'none') return interaction.respond(blockAutocomplete(eq.on_event));
+
+        if (!user) return interaction.respond([{ name: `🚫 ${eq.no_char}`, value: -1 }]);
 
         const inv = getUserInventory(user.id);
         const focused = interaction.options.getFocused().toLowerCase();
@@ -55,6 +58,10 @@ module.exports = {
 
     async execute(interaction) {
         let user = getUserData(interaction.user.id);
+
+        const blocks = block.noChar(user) || block.onEvent(user) || block.Resting(user);
+        if (blocks) return interaction.reply({ content: blocks , ephemeral: true });
+
         const id = interaction.options.getInteger('item');
         if (typeof id !== 'number' || id <= 0) {
             return interaction.reply({ content: eq.inv_opt , ephemeral: true });

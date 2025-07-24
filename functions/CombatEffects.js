@@ -1,7 +1,22 @@
 const { DEBUG } = require('../config.js');
 const { total } = require('./stats');
 const { cf } = require('../data/locale.js');
-
+/*
+ * cortante > sangramento
+ * penetrante > sangramento
+ * contundente > atordoamento
+ * chocante > paralisia
+ * queimante > exaustão
+ * congelante > paralisia
+ * vital > enjoo
+ *
+ * sangramento x > x dano ao agir
+ * incendiado x > x dano ao agir
+ * atordoamento x > -x*2 em ini x em acerto
+ * exaustão x > -x em acerto e mov
+ * paralisia x > -x em reação e mov
+ * enjoo x > -x em acerto e reação
+ */
 const CombatTriggers = {
     onTurnStart: {
         regenerar_pm: (entity, log) => {
@@ -106,16 +121,16 @@ const CombatTriggers = {
             return {
                 acerto: 10,
                 consome: true };
-        },
+        }/*,
         STUN: (entity, log) => {
             if (DEBUG) console.log("Stun debuff ativo");
             const pen = Math.ceil(getStatusDuration(entity, "STUN")/3)
-            console.log("Stun before hit:",getStatusDuration(entity, "STUN"));
+            console.log("Stun at round start:",getStatusDuration(entity, "STUN"));
             reduceStatus(entity, "STUN");
-            console.log("Stun after hit:",getStatusDuration(entity, "STUN"));
+            console.log("Stun after round:",getStatusDuration(entity, "STUN"));
             return {
-                acerto: -pen };
-        }
+            acerto: -pen };
+        }*/
     },
 
     onHitEffect: {
@@ -181,6 +196,13 @@ const CombatTriggers = {
             reduceStatus(entity, "BURN"); // reduz 1 turno
             log.push(`**${entity.nome}** ${cf.tk} **${dmg}** ${cf.brn_dmg}! 🔥`);
             return;
+        },
+        STUN: (entity, log) => {
+            console.log("Stun at round start:",getStatusDuration(entity, "STUN"));
+            reduceStatus(entity, "STUN");
+            console.log("Stun after round:",getStatusDuration(entity, "STUN"));
+            if (!hasStatus(entity, "STUN")) log.push(`**${entity.nome}** ${cf.tk} ${cf.no_stn}`);
+            return;
         }
     }
 };
@@ -228,22 +250,7 @@ function removeStatus(entity, tag) {
     });
     entity.STATUS = JSON.stringify(filtered);
 }
-/*
- * c o*rtante > sangramento
- * penetrante > sangramento
- * contundente > atordoamento
- * chocante > paralisia
- * queimante > exaustão
- * congelante > paralisia
- * vital > enjoo
- *
- * sangramento x > x dano ao agir
- * incendiado x > x dano ao agir
- * atordoamento x > -x*2 em ini x em acerto
- * exaustão x > -x em acerto e mov
- * paralisia x > -x em reação e mov
- * enjoo x > -x em acerto e reação
- */
+
 function addDmgTypeEffect (entity, ele, log, pow = 1 ){
     switch (ele) {
         case "ct": {

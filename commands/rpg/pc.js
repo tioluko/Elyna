@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require("discord.js");
 const { getUserData, updateUserData } = require("../../utils/db.js");
 const { createPCbuttons } = require("../../functions/pointMenus");
 const { info, pc } = require("../../data/locale.js");
+const block = require('../../utils/block.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -17,9 +18,9 @@ module.exports = {
 
   async execute(interaction) {
     const user = getUserData(interaction.user.id);
-    if (!user) {
-      return interaction.reply(info.no_character);
-    }
+
+    const blocks = block.noChar(user) || block.onEvent(user) || block.Resting(user);
+    if (blocks) return interaction.reply({ content: blocks , ephemeral: true });
 
     const components = createPCbuttons(user);
 

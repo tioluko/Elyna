@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const stats = require("../../functions/stats.js");
+const block = require('../../utils/block.js');
 const { getUserData, updateUserData } = require("../../utils/db.js");
 const { info, st, pp } = require("../../data/locale.js");
 
@@ -67,6 +68,10 @@ module.exports = {
 
   async execute(interaction) {
     const user = getUserData(interaction.user.id);
+
+    const blocks = block.noChar(user) || block.onEvent(user) || block.Resting(user);
+    if (blocks) return interaction.reply({ content: blocks , ephemeral: true });
+
     const skillChoices = buildSkillChoices(st);
     let choice = interaction.options.getString("skill");
     let choicename = skillChoices.find((attr) => attr.value === choice)?.name; //I need that because Discord.js wont let me pick an option choice name directly u.u

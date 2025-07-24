@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getUserData, updateUserData, db } = require('../../utils/db.js');
 const stats = require('../../functions/stats.js');
+const block = require('../../utils/block.js');
 const { barCreate } = require('../../functions/stats.js');
 const { getTile } = require('../../functions/MapReader.js');
 const { createCombat } = require('../../functions/CombatEvent.js');
@@ -16,10 +17,9 @@ module.exports = {
 
     async execute(interaction) {
         let user = getUserData(interaction.user.id);
-        if (!user) {
-            return interaction.reply(info.no_character);
-        }
-        if (user.EVENT !== 'none') return interaction.reply({ content: info.on_event, ephemeral: true });
+
+        const blocks = block.noChar(user) || block.onEvent(user) || block.Resting(user);
+        if (blocks) return interaction.reply({ content: blocks , ephemeral: true });
 
         // 🗺️ Pega tile atual
         const [x, y] = user.AREA.split(',').map(Number);

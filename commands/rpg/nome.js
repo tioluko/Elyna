@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { getUserData, updateUserData } = require('../../utils/db.js');
 const { info } = require('../../data/locale.js');
+const block = require('../../utils/block.js');
 
 module.exports = {
     cooldown: 5,
@@ -18,6 +19,10 @@ module.exports = {
 
     async execute(interaction){
         const user = getUserData(interaction.user.id);
+
+        const blocks = block.noChar(user) || block.onEvent(user);
+        if (blocks) return interaction.reply({ content: blocks , ephemeral: true });
+
         let nome = interaction.options.getString('nome');
 
         if (!user) {

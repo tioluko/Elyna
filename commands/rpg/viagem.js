@@ -1,3 +1,4 @@
+const { DEBUG } = require('../../config.js');
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const { getUserData, updateUserData } = require('../../utils/db.js');
 const { generateMiniMapImage } = require('../../utils/ImageGen.js');
@@ -5,6 +6,7 @@ const { getTile } = require('../../functions/MapReader.js');
 const { info, map } = require('../../data/locale.js');
 const { barCreate } = require('../../functions/stats.js');
 const mapa = require('../../data/map.json');
+const block = require('../../utils/block.js');
 
 function getMovementCost(tipo) {
     if ([2, 3, 6].includes(tipo)) return 1;
@@ -40,10 +42,10 @@ module.exports = {
 
     async execute(interaction) {
         let user = getUserData(interaction.user.id);
-        if (!user) {
-            return interaction.reply(info.no_character);
-        }
-        if (user.EVENT !== 'none') return interaction.reply({ content: info.on_event, ephemeral: true });
+
+        const blocks = block.noChar(user) || block.onEvent(user) || block.Resting(user);
+        if (DEBUG) console.log(blocks)
+        if (blocks) return interaction.reply({ content: blocks , ephemeral: true });
 
         const dir = interaction.options.getString('direcao');
         const directions = {

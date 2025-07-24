@@ -15,11 +15,10 @@ module.exports = {
 
     async execute(interaction){
         const user = getUserData(interaction.user.id);
-        if (!user) {
-            return interaction.reply(info.no_character);
-        }
+
+        if (!user) return interaction.reply({ content: info.no_character , ephemeral: true });
+
         const [x, y] = user.AREA.split(',').map(Number);
-        //const [x, y] = [7,15];
         const tile = getTile(x, y);
 
         await interaction.deferReply();

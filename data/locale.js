@@ -6,9 +6,11 @@ const info = {
     //Respostas padrões
     has_character: `:star: You already have a character! :star:`,
     no_character: `:star: You don't have a character yet, use **/newcharacter** to make one! :star:`,
+    no_char: `You don't have a character yet, use **/newcharacter** to make one!`,
     character_created: `:star: Rejoice, your character is born! :star:\n\nYou can now use the following commands to customize it:\n**/name** Change your name.\n**/avatar** Change your image.\n**/bp** Invest your character points (BPs)\n**/pp** Invest your skill points (PPs)\n**/profile** Display your entire character sheet`,
     set_name: `Your character name is`,
     on_event: `Impossible, resolve your current situation first ( /act )`,
+    on_rest: `Impossible, you are resting ( /rest )`,
     spam: `:star: Calm down buddy... I need to breathe between commands :star:`,
 
     //Mensagens de erro erro bug etc
@@ -39,6 +41,7 @@ const ava = {
 const eq ={
     no_char: `You don't have a character yet, use /newcharacter to create one!`,
     on_event: `Impossible, resolve your current situation first ( /act )`,
+    on_rest: `Impossible, you are resting ( /rest )`,
     inv_opt: `Invalid option`,
     put: `You equipped`,
     off: `You removed`,
@@ -59,7 +62,12 @@ const map ={
     tipo7: `Mountain`,
     tipo8: `Frozen plains`,
     tipo9: `Desert`,
-    sp: "SP"
+    sp: "SP",
+    soon: `:star: You just started to rest, wait at least a minute :star:`,
+    camp: `:sleeping_accommodation::zzz: You have set a camp to rest and recover.`,
+    camp2: `:star: Use the command again if you wish to stop resting :star:`,
+    ecamp: `You rested for`,
+    ecamp2: `minutes and recovered:`
 };
 const cft ={
     youneed: `You need`,
@@ -212,13 +220,14 @@ const cf = {
     add_psn: `is further poisoned`,
     add_bld: `is bleeding even more`,
     add_brn: `is on more fire`,
-    add_stn: `is stunned harder`,
-    add_plz: `is paralyzed harder`,
+    add_stn: `is further stunned`,
+    add_plz: `is further paralyzed`,
     add_nau: `is further nauseated`,
     psn_dmg: `poison damage`,
     bld_dmg: `bleed damage`,
     brn_dmg: `flame damage`,
-    acd_dmg: `acid damage`
+    acd_dmg: `acid damage`,
+    no_stn: `is no longer stunned.`,
 };
 
 module.exports = {

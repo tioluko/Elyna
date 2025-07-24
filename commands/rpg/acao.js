@@ -5,6 +5,7 @@ const { processCombatAction } = require('../../functions/CombatEvent');
 const CombatEngine = require('../../functions/CombatEngine');
 const { processNarrativeAction } = require('../../functions/NarrativeEvent');
 const stats = require('../../functions/stats');
+const block = require('../../utils/block.js');
 const { info, act } = require('../../data/locale.js');
 const lastCombatMessages = new Map();
 
@@ -39,11 +40,14 @@ module.exports = {
 
         const user = getUserData(interaction.user.id);
         if (DEBUG) console.log("running autocomplete for", interaction.user.id);
-        function blockAutocomplete(message) {
-            return [{ name: `🚫 ${message}`, value:'__BLOCK__'}];
-        }
-        if (!user) return interaction.respond(blockAutocomplete(act.no_char));
-        if (user.EVENT === 'none') return interaction.respond(blockAutocomplete(act.on_event));
+        //function blockAutocomplete(message) {
+        //    return [{ name: `🚫 ${message}`, value:'__BLOCK__'}];
+        //}
+        //if (!user) return interaction.respond(blockAutocomplete(act.no_char));
+        //if (user.EVENT === 'none') return interaction.respond(blockAutocomplete(act.on_event));
+
+        if (!user) return interaction.respond([{ name: `🚫 ${act.no_char}`, value:'__BLOCK__'}]);
+        if (user.EVENT === 'none') return interaction.respond([{ name: `🚫 ${act.on_event}`, value:'__BLOCK__'}]);
 
         const focused = interaction.options.getFocused();
         const userId = interaction.user.id;
@@ -100,6 +104,7 @@ module.exports = {
         const startMem3 = process.memoryUsage().heapUsed;
 
         const user = getUserData(interaction.user.id);
+        if (!user) return interaction.reply({ content: info.no_character , ephemeral: true });
 
         const id = interaction.options.getString('action');
         if (!id || id.startsWith('__BLOCK')) {

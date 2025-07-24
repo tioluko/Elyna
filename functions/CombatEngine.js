@@ -83,11 +83,10 @@ class CombatEngine {
 
         ////////DEFINE DIST////////////////////////////////
         const totalDist = this.getDist(this.player, move, this.npc, npcMove);
-        if (DEBUG) console.log("Distancia alterada por ações:", totalDist);
 
         ////////DEFINE ORDEM DE AÇÃO////////////////////////////////
         const order = this.defineTurnOrder(this.player, this.npc, move, npcMove);
-        if (DEBUG) console.log("Distância inicial:", this.combat.dist);
+        if (DEBUG) console.log("Distância inicial:", this.combat.dist, "Distancia alterada por ações:", totalDist);
 
         ////////RODADA////////////////////////////////
         for (const [attacker, defender, aMove, dMove] of order) {
@@ -117,13 +116,14 @@ class CombatEngine {
             this.dano = 0;
             this.danofinal = 0;
             this.crit = (rollAtk.d1 === 10 && rollAtk.d2 === 10) ? aMove.DNCRI : 1;
-            this.defesa = stats.total(defender, "RE") + (defender[dper] || 0);
+            this.defesa = 0;
             this.foco = "rand";
             this.movtexto = "";
             this.extexto = "";
 
             ////////DEFINE FORMULAS PADRÕES POR TIPO DE AÇAO//////////////////
-            const bonus = this.moveFormulae(attacker, totalDist, aMove);
+            const mods = this.tempMods(attacker, defender);
+            const bonus = this.moveFormulae(attacker, totalDist, aMove, mods);
             ////////ESCREVE A SELEÇÃO NO LOG/////////////////////////////////
             this.movtexto = bonus.desc;
             this.log.push(`**${attacker.nome}** ${this.movtexto} `+
@@ -140,12 +140,14 @@ class CombatEngine {
             if (aMove.tipo > 0){
                 hitting:{
 
-                if (DEBUG) console.log("Flying opponent?"+ getStatusDuration(defender, "FLY"));
-                this.acerto = rollAtk.total + rollPR + bonus.acerto - (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
+                this.acerto = rollAtk.total + rollPR + bonus.acerto + mods.acerto - (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
                 this.dano = bonus.dano * this.crit;
+                this.defesa = stats.total(defender, "RE") + mods.defesa + (defender[dper] || 0);
 
                 //Mostra o ataque utilizado e a forma que foi utilzada
-                if (DEBUG) console.log("BonusDefesa:"+ stats.total(defender, "RE") +"+"+ (defender[dper]));
+                if (DEBUG) console.log("Ataque:"+ rollAtk.total +"+"+ rollPR +"+"+ bonus.acerto +"+"+ mods.acerto +"-"+ (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0));
+                if (DEBUG) console.log("Dano:"+ bonus.dano +"*"+ this.crit);
+                if (DEBUG) console.log("Defesa:"+ stats.total(defender, "RE") +"+"+ mods.defesa +"+"+ (defender[dper]) + "Flying?"+ getStatusDuration(defender, "FLY") );
 
                 /////////////////////////////////////////////////////////////////////
                 ////ATTACKER STATUS BEFORE HIT///
@@ -364,13 +366,13 @@ class CombatEngine {
         return order;
     }
 
-    moveFormulae(a, d, m ) {
+    moveFormulae(a, d, m, mods) {
         const dd = -d;
         if (DEBUG) console.log("dist reverso: "+dd);
         const fo = stats.total(a, "FOR");
         const ag = stats.total(a, "AGI");
         const it = stats.total(a, "INT");
-        const mv = stats.total(a, "MOV");
+        const mv = stats.total(a, "MOV") + mods.amov;
         const es = stats.total(a, "ESS");
         const si = stats.total(a, "SIN");
         let acerto = 0;
@@ -390,7 +392,7 @@ class CombatEngine {
                 : d < 3 ? ce.c2
                 : ce.c3;
 
-                if (DEBUG) console.log("BonusAcerto:" + m.AC +"+"+ ag +"+"+ a[m.pericia] +"+"+ Math.floor(Math.min((m.ALC + dd),dd/2))+
+                if (DEBUG) console.log("BonusAcerto:" + m.AC +"+"+ ag +"+"+ a[m.pericia] +"+"+ Math.floor(Math.min((m.ALC + dd),dd/4))+
                     " Base Dano:"+ m.DN +"+"+ fo +"+"+  Math.max(0, Math.floor(Math.min(mv + d, mv) / 2)) + " CritMod:" +m.DNCRI);
             break;
             case 2: /*RangeA (recua e ataca) Arco/Arremesso Aumenta distancia em MOV
@@ -446,6 +448,28 @@ class CombatEngine {
         return { acerto , dano , desc };
     }
 
+    tempMods(a, d, m ) {
+        let acerto = 0;
+        let dano = 0;
+        let crit = 0;
+        let defesa = 0;
+        let amov = 0;
+        let dmov = 0;
+
+        acerto -= Math.ceil(getStatusDuration(a, "STUN")/3)
+        acerto -= Math.ceil(getStatusDuration(a, "NAUSEA")/3)
+
+        defesa -= Math.ceil(getStatusDuration(d, "PARALZ")/3)
+        defesa -= Math.ceil(getStatusDuration(d, "NAUSEA")/3)
+
+        amov -= Math.ceil(getStatusDuration(a, "PARALZ")/3)
+
+        dmov -= Math.ceil(getStatusDuration(d, "PARALZ")/3)
+
+        if (DEBUG) console.log("acerto:"+acerto+" dano:"+dano+" crit:"+crit+" defesa:"+defesa+" amov:"+amov+" dmov:"+dmov);
+        return { acerto , dano , crit, defesa, amov, dmov };
+    }
+
     effectTrigger(trigger, entity, tag, log){
         if (CombatTriggers[trigger]?.[tag]) {
             if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
@@ -467,7 +491,6 @@ class CombatEngine {
 
 
     pickBodyPart(u, f) {
-        if (DEBUG) console.log(f);
         let filtered = [];
         if (f === "rand"){
             const options = ["cb", "tr", "tr", "tr", "tr", "tr", "bd", "be", "pd", "pe"].filter(Boolean);
@@ -479,9 +502,9 @@ class CombatEngine {
         }
         const part = f !== "rand" ? f : filtered[Math.floor(Math.random() * filtered.length)];
 
-        if (DEBUG) console.log(filtered);
+        if (DEBUG) console.log(f +" -> "+ part);
         switch (part) {
-            case "cb": return [ "RD"+part , `in the head`, 2];
+            case "cb": return [ "RD"+part , `in the head`, 1.5];
             case "tr": return [ "RD"+part , `in the body`, 1];
             case "bd": return [ "RD"+part , `in the right arm`, 0.5];
             case "be": return [ "RD"+part , `in the left arm`, 0.5];

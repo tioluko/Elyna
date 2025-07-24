@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const { getUserData, getUserInventory } = require('../../utils/db.js');
 const { unequip } = require('../../functions/EquipEvent.js');
 const { info, eq } = require('../../data/locale.js');
+const block = require('../../utils/block.js');
 
 module.exports = {
     cooldown: 1,
@@ -20,11 +21,13 @@ module.exports = {
 
     async autocomplete(interaction) {
         const user = getUserData(interaction.user.id);
-        function blockAutocomplete(message) {
-            return [{ name: `🚫 ${message}`, value: -1 }];
-        }
-        if (!user) return interaction.respond(blockAutocomplete(eq.no_char));
-        if (user.EVENT !== 'none') return interaction.respond(blockAutocomplete(eq.on_event));
+        //function blockAutocomplete(message) {
+        //    return [{ name: `🚫 ${message}`, value: -1 }];
+        //}
+        //if (!user) return interaction.respond(blockAutocomplete(eq.no_char));
+        //if (user.EVENT !== 'none') return interaction.respond(blockAutocomplete(eq.on_event));
+
+        if (!user) return interaction.respond([{ name: `🚫 ${eq.no_char}`, value: -1 }]);
 
         const inv = getUserInventory(user.id);
         const focused = interaction.options.getFocused().toLowerCase();
@@ -39,6 +42,10 @@ module.exports = {
 
     async execute(interaction) {
         const user = getUserData(interaction.user.id);
+
+        const blocks = block.noChar(user) || block.onEvent(user) || block.Resting(user);
+        if (blocks) return interaction.reply({ content: blocks , ephemeral: true });
+
         const id = interaction.options.getInteger('item');
         if (typeof id !== 'number' || id <= 0) {
             return interaction.reply({ content: eq.inv_opt , ephemeral: true });

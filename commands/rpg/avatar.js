@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-
+const block = require('../../utils/block.js');
 const { getUserData, updateUserData } = require('../../utils/db.js');
 const { isValidURL, checkImage } = require('../../functions/urlcheck.js');
 const { info, ava } = require('../../data/locale.js');
@@ -25,9 +25,9 @@ module.exports = {
         const user = getUserData(interaction.user.id);
         let url = interaction.options.getString('url');
 
-        if (!user) {
-            return interaction.reply(info.no_character);
-        }
+        const blocks = block.noChar(user) || block.onEvent(user);
+        if (blocks) return interaction.reply({ content: blocks , ephemeral: true });
+
         if (!isValidURL(url)) {  //Checa se é um url valido
             interaction.reply(ava.invalid_url);
         } else {
