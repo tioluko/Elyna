@@ -30,9 +30,10 @@ module.exports = {
     .setDescriptionLocalizations({ "pt-BR": "Consumir Ponto de Ritmo pra somar 1d10 no teste dessa ação?", })
      )
     .addStringOption(option =>
-    option.setName('foco')
-    .setDescription('Focus')
-    .setDescriptionLocalizations({ "pt-BR": "Foco", })
+    option.setName('focus')
+    .setDescription('Pay a Rythm Point to focus on a body part')
+    .setNameLocalizations({ "pt-BR": "foco", })
+    .setDescriptionLocalizations({ "pt-BR": "Consumir Ponto de Ritmo para foca em uma parte do corpo", })
     .setAutocomplete(true)
     ),
 
@@ -64,7 +65,7 @@ module.exports = {
                 .map(m => ({ name: m.nome, value: `move:${m.move_id}` }));
                 await interaction.respond([...choices].slice(0, 25));
             }
-            if (focusedOption.name === 'foco') {
+            if (focusedOption.name === 'focus') {
 
                 const combat = getCombatState(user.id);
                 const npc = JSON.parse(combat.npc_data);
@@ -112,7 +113,7 @@ module.exports = {
         }
         const evento = user.EVENT;
         const pr = interaction.options.getBoolean('rp');
-        const fc = interaction.options.getString('foco');
+        const fc = interaction.options.getString('focus');
 
         if (evento.startsWith('combate:')) {
 

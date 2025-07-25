@@ -25,9 +25,6 @@ module.exports = {
 
         let nome = interaction.options.getString('nome');
 
-        if (!user) {
-            return interaction.reply(':star: Você ainda não tem um personagem, use **/criarficha** para criar um! :star:');
-        }
         updateUserData(user.id, { nome: nome });
 
         console.log(`${user.nome}->${nome}`); // log

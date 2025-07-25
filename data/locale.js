@@ -102,7 +102,7 @@ const st = {
     rp: "RP",
     for: "Strength",
     agi: "Agility",
-    res: "Resistence",
+    res: "Resistance",
     int: "Intelligence",
     car: "Charisma",
     ess: "Essence",

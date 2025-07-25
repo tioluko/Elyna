@@ -1,8 +1,9 @@
 const { DEBUG } = require('../../config.js');
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
-const { getUserData, updateUserData } = require('../../utils/db.js');
+const { getUserData, updateUserData, db } = require('../../utils/db.js');
 const { generateMiniMapImage } = require('../../utils/ImageGen.js');
 const { getTile } = require('../../functions/MapReader.js');
+const { createCombat } = require('../../functions/CombatEvent.js');
 const { info, map } = require('../../data/locale.js');
 const { barCreate } = require('../../functions/stats.js');
 const mapa = require('../../data/map.json');
@@ -87,6 +88,33 @@ module.exports = {
 
         await interaction.deferReply();
 
+        function rollPercent(chance) {
+            return Math.random() * 100 < chance;
+        }
+
+        let encounter = rollPercent(10+(tile.cont*5)+(tile.rank));
+        let npc = null;
+        if (encounter){
+            // 🔍 Busca NPCs compatíveis no mapa
+            const stmt = db.prepare(`
+            SELECT n.* FROM npc_encounters e
+            JOIN npcs n ON n.id = e.npc_id
+            WHERE (e.tipo = ? OR e.tipo = -1)
+            AND e.cont <= ?
+            AND e.ocup <= ?
+            AND ABS(n.NV - ?) <= 1
+            ORDER BY RANDOM()
+            LIMIT 1
+            `);
+            npc = stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1);
+
+            if (!npc) {
+                encounter = false;
+            }else {
+                const combateId = createCombat(user.id, npc.id);
+            }
+        }
+
         // Gera imagem do novo local
         const miniMapBuffer = await generateMiniMapImage(newX, newY, mapa);
         const file = new AttachmentBuilder(miniMapBuffer, { name: 'mapa.png' });
@@ -99,9 +127,10 @@ module.exports = {
             `🧱 Rank: **${tile.rank}**\n` +
             `🏙️ Occupancy: **${tile.ocup}**\n` +
             `🌀 Contamination: **${tile.cont}**\n\n` +
-            `${barCreate(user,"PE")} **${map.sp}: **${user.PE} / ${user.MPE}`
+            `${barCreate(user,"PE")} **${map.sp}: **${user.PE} / ${user.MPE}` +
+            `${!encounter ? "" : `\n\n**${npc.nome}** ${map.encounter}`}`
         )
-        .setImage('attachment://mapa.png');
+        .setImage(`${!encounter ? 'attachment://mapa.png' : npc.image}`);
 
         console.log(`${currX},${currY}-> ${newX},${newY}`); // log
 

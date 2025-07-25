@@ -52,7 +52,7 @@ function addxp(u, amt) {
   while (xp >= rxp) {
     nv++;
     rxp = 10 + ((nv - 1) ** 2) * 10;
-    pcUp += 3;
+    pcUp += 5;
     ppUp += (u.INT + 6);
     LvUp++;
   }
