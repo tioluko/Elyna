@@ -19,189 +19,258 @@ const { cf } = require('../data/locale.js');
  */
 const CombatTriggers = {
     onTurnStart: {
-        regenerar_pm: (entity, log) => {
-            entity.PM += 5;
+        regenerar_pm: (attacker, defender, log) => {
+            attacker.PM += 5;
             log.push(`✨ Recuperou 5 PM com regeneração mágica`);
         },
-        camuflado: (entity, log) => {
-            log.push(`🫥 ${entity.nome} permanece camuflado...`);
+        camuflado: (attacker, defender, log) => {
+            log.push(`🫥 ${attacker.nome} permanece camuflado...`);
         }
     },
 
     onAction: {
-        REC_PR: (entity, log) => {
-            const max = entity.MPR || 0;
+        REC_PR: (attacker, defender, log) => {
+            const max = attacker.MPR || 0;
             const rec = Math.floor(max / 2);
-            entity.PR = Math.min(entity.PR + rec, max);
-            log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pr} ✨`);
+            attacker.PR = Math.min(attacker.PR + rec, max);
+            log.push(`**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pr} ✨`);
             return;
         },
-        REC_PV_MAG: (entity, log) => {
-            const max = entity.MPV || 0;
-            const rec = total(entity, "ESS") + (entity.NV * 2);
-            entity.PV = Math.min(entity.PV + rec, max);
-            if (hasStatus(entity, "POISON")) reduceStatus(entity, "POISON", entity.NV);
-            if (hasStatus(entity, "BLEED")) reduceStatus(entity, "BLEED", entity.NV);
-            log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
+        REC_PV_MAG: (attacker, defender, log) => {
+            const max = attacker.MPV || 0;
+            const rec = total(attacker, "ESS") + (attacker.NV * 2);
+            attacker.PV = Math.min(attacker.PV + rec, max);
+            if (hasStatus(attacker, "BLEED")) reduceStatus(attacker, "BLEED", attacker.NV);
+            log.push(`**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
             return;
         },
-        REC_PV_NAT: (entity, log) => {
-            const max = entity.MPV || 0;
-            const rec = total(entity, "RES")* 2;
-            entity.PV = Math.min(entity.PV + rec, max);
-            if (hasStatus(entity, "POISON")) reduceStatus(entity, "POISON", entity.NV);
-            if (hasStatus(entity, "BLEED")) reduceStatus(entity, "BLEED", entity.NV);
-            log.push(`**${entity.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
+        REC_PV_NAT: (attacker, defender, log) => {
+            const max = attacker.MPV || 0;
+            const rec = total(attacker, "RES")* 2;
+            attacker.PV = Math.min(attacker.PV + rec, max);
+            if (hasStatus(attacker, "BLEED")) reduceStatus(attacker, "BLEED", attacker.NV);
+            log.push(`**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
             return;
         },
-        FUGA: (entity, log) => {
-            addStatus(entity, "FUGA");
-            log.push(`**${entity.nome}** ${cf.running}!`);
+        FUGA: (attacker, defender, log) => {
+            addStatus(attacker, "FUGA");
+            log.push(`**${attacker.nome}** ${cf.running}!`);
             return;
         }
     },
 
     onHitBefore: {
-        FOCUScb: (entity, log) => {
+        FOCUScb: (attacker, defender, log) => {
             if (DEBUG) console.log("Mirando na cabeça");
             return {
                 foco: String("cb"),
                 consome: true };
         },
-        FOCUStr: (entity, log) => {
+        FOCUStr: (attacker, defender, log) => {
             if (DEBUG) console.log("Mirando no tronco");
             return {
                 foco: "tr",
                 consome: true };
         },
-        FOCUSbd: (entity, log) => {
+        FOCUSbd: (attacker, defender, log) => {
             if (DEBUG) console.log("Mirando no braço d");
             return {
                 foco: "bd",
                 consome: true };
         },
-        FOCUSbe: (entity, log) => {
+        FOCUSbe: (attacker, defender, log) => {
             if (DEBUG) console.log("Mirando no braço e");
             return {
                 foco: "be",
                 consome: true };
         },
-        FOCUSpd: (entity, log) => {
+        FOCUSpd: (attacker, defender, log) => {
             if (DEBUG) console.log("Mirando na perna d");
             return {
                 foco: "pd",
                 consome: true };
         },
-        FOCUSpe: (entity, log) => {
+        FOCUSpe: (attacker, defender, log) => {
             if (DEBUG) console.log("Mirando na perna e");
             return {
                 foco: "pe",
                 consome: true };
         },
-        FOCUSe1: (entity, log) => {
+        FOCUSe1: (attacker, defender, log) => {
             if (DEBUG) console.log("Mirando em e1");
             return {
                 foco: "e1",
                 consome: true };
         },
-        FOCUSe2: (entity, log) => {
+        FOCUSe2: (attacker, defender, log) => {
             if (DEBUG) console.log("Mirando em e2");
             return {
                 foco: "e2",
                 consome: true };
         },
-        PR_BOOST: (entity, log) => {
+        PR_BOOST: (attacker, defender, log) => {
             if (DEBUG) console.log("Pr boost ativado");
             return {
                 consome: true };
         },
-        BLITZ: (entity, log) => {
+        BLITZ: (attacker, defender, log) => {
             if (DEBUG) console.log("Blitz ativado");
             log.push(cf.blitz);
             return {
                 acerto: 10,
                 consome: true };
-        }/*,
-        STUN: (entity, log) => {
-            if (DEBUG) console.log("Stun debuff ativo");
-            const pen = Math.ceil(getStatusDuration(entity, "STUN")/3)
-            console.log("Stun at round start:",getStatusDuration(entity, "STUN"));
-            reduceStatus(entity, "STUN");
-            console.log("Stun after round:",getStatusDuration(entity, "STUN"));
-            return {
-            acerto: -pen };
-        }*/
+        }
     },
 
     onHitEffect: {
-        POISON: (entity, log) => {
+        POISON: (attacker, defender, log) => {
             const dt = 15;
-            const stat = total(entity, "RES")
+            const stat = total(defender, "RES")
             const roll = r2d10();
             const result = roll.total + stat;
-            if (DEBUG) console.log('.');
             log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
 
             if (result >= dt) {
-                log.push(`**${entity.nome}** ${cf.psn_res}`);
+                log.push(`**${defender.nome}** ${cf.psn_res}`);
                 return;
             }else {
-                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "POISON") ? `${cf.add_psn}` : `${cf.is_psn}`));
-                addStatus(entity, "POISON", (1+dt-result));
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "POISON") ? `${cf.add_psn}` : `${cf.is_psn}`));
+                addStatus(defender, "POISON", (1+dt-result));
                 return;
             }
         },
-        BLEED: (entity, log) => {
-            target.PV -= 2;
+        POISON2: (attacker, defender, log) => {
+            const dt = 20;
+            const stat = total(defender, "RES")
+            const roll = r2d10();
+            const result = roll.total + stat;
+            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+
+            if (result >= dt) {
+                log.push(`**${defender.nome}** ${cf.psn_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "POISON") ? `${cf.add_psn}` : `${cf.is_psn}`));
+                addStatus(defender, "POISON", (1+dt-result));
+                return;
+            }
+        },
+        MPOISON: (acerto, defender, log) => {
+            const dt = acerto;
+            const stat = total(defender, "GM")
+            const roll = r2d10();
+            const result = roll.total + stat;
+            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+
+            if (result >= dt) {
+                log.push(`**${defender.nome}** ${cf.psn_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "POISON") ? `${cf.add_psn}` : `${cf.is_psn}`));
+                addStatus(defender, "POISON", (1+dt-result));
+                return;
+            }
+        },
+        NAUSEA: (attacker, defender, log) => {
+            const dt = 15;
+            const stat = total(defender, "RES")
+            const roll = r2d10();
+            const result = roll.total + stat;
+            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+
+            if (result >= dt) {
+                log.push(`**${defender.nome}** ${cf.nau_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "NAUSEA") ? `${cf.add_nau}` : `${cf.is_nau}`));
+                addStatus(defender, "NAUSEA", (1+dt-result));
+                return;
+            }
+        },
+        MNAUSEA: (acerto, defender, log) => {
+            const dt = acerto;
+            const stat = total(defender, "GM")
+            const roll = r2d10();
+            const result = roll.total + stat;
+            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+
+            if (result >= dt) {
+                log.push(`**${defender.nome}** ${cf.nau_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "NAUSEA") ? `${cf.add_nau}` : `${cf.is_nau}`));
+                addStatus(defender, "NAUSEA", (1+dt-result));
+                return;
+            }
+        },
+        BLEED: (attacker, defender, log) => {
+            defender.PV -= 2;
             log.push(`🩸 Sofreu 2 de dano por sangramento!`);
         }
     },
 
     onTurnEnd: {
-        NAT_REGEN: (entity, log) => {
-            const dmg = getStatusDuration(entity, "NAT_REGEN");
+        NAT_REGEN: (attacker, defender, log) => {
+            const dmg = getStatusDuration(attacker, "NAT_REGEN");
             console.log("regen:", dmg)
-            entity.PV += dmg;
-            log.push(`**${entity.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
+            attacker.PV += dmg;
+            log.push(`**${attacker.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
             return;
         },
-        REGEN: (entity, log) => {
-            const dmg = entity.NV;
+        REGEN: (attacker, defender, log) => {
+            const dmg = attacker.NV;
             console.log("regen:", dmg)
-            entity.PV += dmg;
-            reduceStatus(entity, "REGEN"); // reduz 1 turno
-            log.push(`**${entity.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
+            attacker.PV += dmg;
+            reduceStatus(attacker, "REGEN"); // reduz 1 turno
+            log.push(`**${attacker.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
             return;
         },
-        POISON: (entity, log) => {
-            const dmg = Math.ceil(getStatusDuration(entity, "POISON")/6);
+        POISON: (attacker, defender, log) => {
+            const dmg = Math.ceil(getStatusDuration(attacker, "POISON")/6);
             console.log("poison power:", dmg)
-            entity.PV -= dmg;
-            reduceStatus(entity, "POISON"); // reduz 1 turno
-            log.push(`**${entity.nome}** ${cf.tk} **${dmg}** ${cf.psn_dmg}! 🤢`);
+            attacker.PV -= dmg;
+            reduceStatus(attacker, "POISON"); // reduz 1 turno
+            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.psn_dmg}! 🤢`);
+            if (!hasStatus(attacker, "POISON")) log.push(`**${attacker.nome}** ${cf.no_psn}`);
             return;
         },
-        BLEED: (entity, log) => {
-            const dmg = Math.ceil(getStatusDuration(entity, "BLEED")/5);
+        BLEED: (attacker, defender, log) => {
+            const dmg = Math.ceil(getStatusDuration(attacker, "BLEED")/5);
             console.log("bleed power:", dmg)
-            entity.PV -= dmg;
-            reduceStatus(entity, "BLEED"); // reduz 1 turno
-            log.push(`**${entity.nome}** ${cf.tk} **${dmg}** ${cf.bld_dmg}! 🩸`);
+            attacker.PV -= dmg;
+            reduceStatus(attacker, "BLEED"); // reduz 1 turno
+            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.bld_dmg}! 🩸`);
+            if (!hasStatus(attacker, "BLEED")) log.push(`**${attacker.nome}** ${cf.no_bld}`);
             return;
         },
-        BURN: (entity, log) => {
-            const dmg = Math.ceil(getStatusDuration(entity, "BURN")/7);
+        BURN: (attacker, defender, log) => {
+            const dmg = Math.ceil(getStatusDuration(attacker, "BURN")/7);
             console.log("burn power:", dmg)
-            entity.PV -= dmg;
-            reduceStatus(entity, "BURN"); // reduz 1 turno
-            log.push(`**${entity.nome}** ${cf.tk} **${dmg}** ${cf.brn_dmg}! 🔥`);
+            attacker.PV -= dmg;
+            reduceStatus(attacker, "BURN"); // reduz 1 turno
+            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.brn_dmg}! 🔥`);
+            if (!hasStatus(attacker, "BURN")) log.push(`**${attacker.nome}** ${cf.no_brn}`);
             return;
         },
-        STUN: (entity, log) => {
-            console.log("Stun at round start:",getStatusDuration(entity, "STUN"));
-            reduceStatus(entity, "STUN");
-            console.log("Stun after round:",getStatusDuration(entity, "STUN"));
-            if (!hasStatus(entity, "STUN")) log.push(`**${entity.nome}** ${cf.tk} ${cf.no_stn}`);
+        STUN: (attacker, defender, log) => {
+            console.log("Stun at round start:",getStatusDuration(attacker, "STUN"));
+            reduceStatus(attacker, "STUN");
+            console.log("Stun after round:",getStatusDuration(attacker, "STUN"));
+            if (!hasStatus(attacker, "STUN")) log.push(`**${attacker.nome}** ${cf.no_stn}`);
+            return;
+        },
+        PARALZ: (attacker, defender, log) => {
+            console.log("Paralz at round start:",getStatusDuration(attacker, "PARALZ"));
+            reduceStatus(attacker, "PARALZ");
+            console.log("Paralz after round:",getStatusDuration(attacker, "PARALZ"));
+            if (!hasStatus(attacker, "PARALZ")) log.push(`**${attacker.nome}** ${cf.no_plz}`);
+            return;
+        },
+        NAUSEA: (attacker, defender, log) => {
+            console.log("Nausea at round start:",getStatusDuration(attacker, "NAUSEA"));
+            reduceStatus(attacker, "NAUSEA");
+            console.log("Nausea after round:",getStatusDuration(attacker, "NAUSEA"));
+            if (!hasStatus(attacker, "NAUSEA")) log.push(`**${attacker.nome}** ${cf.no_nau}`);
             return;
         }
     }

@@ -2,7 +2,122 @@ const { DEBUG } = require('../config.js');
 const { db, updateUserData } = require('../utils/db.js');
 const { modApply, calculateStats } = require('./stats.js');
 
+
 function equip(userId, invId) {
+    const inv = db.prepare(`
+    SELECT ui.*, i.slot, i.move_id, i.mods
+    FROM user_inventory ui
+    JOIN items i ON i.id = ui.item_id
+    WHERE ui.id = ? AND ui.user_id = ?
+    `).get(invId, userId);
+    if (!inv) throw new Error("Item inexistente ou inválido");
+
+    let slot = inv.slot;
+
+    // Se for item de mão
+    if (slot === 'hand') {
+        slot = getFreeHand(userId);
+        if (!slot) throw new Error('Ambas as mãos já estão ocupadas.');
+    }
+
+    // Se for item de duas mãos
+    if (slot === '2hand') {
+        if (!getFreeHand(userId)) throw new Error('Ambas as mãos já estão ocupadas.');
+        slot = 'hands';
+
+        const handsToUnequip = db.prepare(`
+        SELECT ui.id, i.move_id
+        FROM user_inventory ui
+        JOIN items i ON i.id = ui.item_id
+        WHERE ui.user_id = ? AND ui.equipado = 1
+        AND ui.slot_override IN ('rhand', 'lhand')
+        `).all(userId);
+
+        db.prepare(`
+        UPDATE user_inventory SET equipado = 0, slot_override = NULL
+        WHERE user_id = ? AND slot_override IN ('rhand', 'lhand')
+        `).run(userId);
+
+        // Remove os moves dos itens que foram removidos das mãos
+        for (const item of handsToUnequip) {
+            db.prepare(`
+            DELETE FROM user_moves
+            WHERE user_id = ? AND origem = ?
+            `).run(userId, `equip:${item.id}`);
+        }
+    } else {
+        // Desequipa qualquer item anterior no mesmo slot (exceto mãos que já foram tratadas acima)
+        const existing = db.prepare(`
+        SELECT ui.id, i.move_id
+        FROM user_inventory ui
+        JOIN items i ON i.id = ui.item_id
+        WHERE ui.user_id = ? AND ui.equipado = 1 AND ui.slot_override = ?
+        `).get(userId, slot);
+
+        if (existing) {
+            db.prepare(`
+            UPDATE user_inventory SET equipado = 0, slot_override = NULL
+            WHERE user_id = ? AND id = ?
+            `).run(userId, existing.id);
+
+            if (existing.move_id) {
+                db.prepare(`
+                DELETE FROM user_moves
+                WHERE user_id = ? AND origem = ?
+                `).run(userId, `equip:${existing.id}`);
+            }
+        }
+    }
+
+    // Atualiza novo item como equipado
+    db.prepare(`
+    UPDATE user_inventory SET equipado = 1, slot_override = ? WHERE id = ?
+    `).run(slot, invId);
+
+    // Remove move desarmado se ambas mãos ocupadas
+    if (!getFreeHand(userId)) {
+        db.prepare(`
+        DELETE FROM user_moves WHERE user_id = ? AND move_id = 96
+        `).run(userId);
+    }
+
+    // Adiciona movimento do novo item, se existir
+    if (inv.move_id) {
+        const mods = JSON.parse(inv.mods || '{}');
+        const moveMods = {};
+        for (const key in mods) {
+            if (key.startsWith("move")) {
+                moveMods[key.slice(4)] = mods[key];
+            }
+        }
+        db.prepare(`
+        INSERT INTO user_moves (user_id, move_id, origem, mods)
+        VALUES (?, ?, ?, ?)
+        `).run(userId, inv.move_id, `equip:${invId}`, JSON.stringify(moveMods));
+    }
+
+    // Atualiza stats
+    const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(userId);
+    const moddedUser = modApply(user);
+    updateUserData(user.id, calculateStats(moddedUser));
+
+    // Se sobrou mão livre, garante ataque desarmado
+    if (getFreeHand(userId)) {
+        const alreadyHas = db.prepare(`
+        SELECT 1 FROM user_moves WHERE user_id = ? AND move_id = 96
+        `).get(userId);
+        if (!alreadyHas) {
+            db.prepare(`
+            INSERT INTO user_moves (user_id, move_id, origem, mods)
+            VALUES (?, 96, 'auto:unarmed', '{}')
+            `).run(userId);
+        }
+    }
+
+    return moddedUser;
+}
+
+/*function equip(userId, invId) {
     const inv = db.prepare(`
     SELECT ui.*, i.slot, i.move_id, i.mods
     FROM user_inventory ui
@@ -114,7 +229,7 @@ function equip(userId, invId) {
     }
 
     return moddedUser;
-}
+}*/
 
 
 function unequip(userId, invId) {
@@ -163,13 +278,13 @@ function addItem(userId, itemId, quantidade = 1) {
     if (!item) throw new Error('Item inexistente');
 
     if (item.tipo === 'equip') {
-        // ⚔️ Equipáveis devem sempre ser adicionados como instância nova
+        // Equipáveis devem sempre ser adicionados como instância nova
         db.prepare(`
         INSERT INTO user_inventory (user_id, item_id, quantidade, equipado)
         VALUES (?, ?, 1, 0)
         `).run(userId, itemId);
     } else {
-        // 📦 Empilháveis: verificar se já existe
+        // Empilháveis: verificar se já existe
         const existing = db.prepare(`
         SELECT * FROM user_inventory WHERE user_id = ? AND item_id = ? AND equipado = 0
         `).get(userId, itemId);

@@ -52,6 +52,7 @@ const map ={
     cant: `:star: You can't cross this terrain... :star:`,
     youneed: `You need`,
     onlyhave: `to cross this terrain, you only have`,
+    onlyhaveb: `to explore this terrain, you only have`,
     tipo0: `Deep sea`,
     tipo1: `Sea`,
     tipo2: `Beach`,
@@ -208,6 +209,7 @@ const cf = {
     running: `is trying to run away`,
     resroll: `Resistance Roll`,
     psn_res: `resists the poison`,
+    nau_res: `resists the nausea`,
     the_psn: `The poison in`,
     intensifies: `intensifies`,
     is_psn: `is poisoned`,
@@ -227,7 +229,11 @@ const cf = {
     bld_dmg: `bleed damage`,
     brn_dmg: `flame damage`,
     acd_dmg: `acid damage`,
+    no_psn: `is no longer poisoned.`,
+    no_brn: `is no longer on fire.`,
     no_stn: `is no longer stunned.`,
+    no_plz: `is no longer paralyzed.`,
+    no_nau: `is no longer with nausea.`,
 };
 
 module.exports = {

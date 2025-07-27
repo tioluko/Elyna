@@ -63,7 +63,7 @@ module.exports = {
             return interaction.reply(`${eq.off} **${item.nome}**`);
         } catch (err) {
             console.error(err);
-            return interaction.reply(`❌ Equip error: ${err.message}`);
+            return interaction.reply({ content:`❌ ${err.message}`, ephemeral: true });
         }
     }
 };

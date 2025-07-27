@@ -40,15 +40,18 @@ module.exports = {
     async autocomplete(interaction) {
 
         const user = getUserData(interaction.user.id);
-        if (DEBUG) console.log("running autocomplete for", interaction.user.id);
+        //if (DEBUG) console.log("running autocomplete for", interaction.user.id);
         //function blockAutocomplete(message) {
-        //    return [{ name: `🚫 ${message}`, value:'__BLOCK__'}];
+        //   return [{ name: `🚫 ${message}`, value:'__BLOCK__'}];
         //}
         //if (!user) return interaction.respond(blockAutocomplete(act.no_char));
         //if (user.EVENT === 'none') return interaction.respond(blockAutocomplete(act.on_event));
 
         if (!user) return interaction.respond([{ name: `🚫 ${act.no_char}`, value:'__BLOCK__'}]);
-        if (user.EVENT === 'none') return interaction.respond([{ name: `🚫 ${act.on_event}`, value:'__BLOCK__'}]);
+        if (!user.EVENT?.startsWith('combate:')) return interaction.respond([]);
+
+        //if (!user) return interaction.respond([{ name: `🚫 ${act.no_char}`, value:'__BLOCK__'}]);
+        //if (user.EVENT === 'none') return interaction.respond([{ name: `🚫 ${act.on_event}`, value:'__BLOCK__'}]);
 
         const focused = interaction.options.getFocused();
         const userId = interaction.user.id;

@@ -132,7 +132,7 @@ class CombatEngine {
 
             ////////ON ACTION MOVE EFFECT////////////////////////////////
             if (DEBUG) console.log('MOVE EFFECT:', effect);
-            for (const tag1 of tags) {this.effectTrigger("onAction", attacker, tag1, this.log)}
+            for (const tag1 of tags) {this.effectTrigger("onAction", attacker, defender, tag1, this.log)}
             /////////////////////////////////////////////
 
             /////////////////////////////////////////////
@@ -152,7 +152,7 @@ class CombatEngine {
                 /////////////////////////////////////////////////////////////////////
                 ////ATTACKER STATUS BEFORE HIT///
                 if (DEBUG) console.log('STATUS DO ATTACKER:', attacker.STATUS);
-                for (const tag2 of tags) {this.effectTrigger("onHitBefore", attacker, tag2[0], this.log)}
+                for (const tag2 of tags) {this.effectTrigger("onHitBefore", attacker, defender, tag2[0], this.log)}
                 /////////////////////////////////////////////////////////////////////
 
                 //Mensagem do Roll de acerto
@@ -192,7 +192,7 @@ class CombatEngine {
                 /////////////////////////////////////////
                 ////////ON HIT MOVE EFFECT////////////////////////////////
                 if (DEBUG) console.log('HIT EFFECT:', effect);
-                for (const tag3 of tags) {this.effectTrigger("onHitEffect", defender, tag3, this.log)}
+                for (const tag3 of tags) {this.effectTrigger("onHitEffect", this.acerto, defender, tag3, this.log)}
                 /////////////////////////////////////////
 
                 /////////////////////////////////////////
@@ -227,7 +227,7 @@ class CombatEngine {
             for (const tag of tags) {
                 if (CombatTriggers.onTurnEnd?.[tag[0]]) {
                     if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
-                    CombatTriggers.onTurnEnd[tag[0]](attacker, this.log);
+                    CombatTriggers.onTurnEnd[tag[0]](attacker, defender, this.log);
                     if (DEBUG) console.log('RESULTADO:', tag);
                 }
             }
@@ -444,6 +444,7 @@ class CombatEngine {
             case "qm": return {acerto , dano , desc, ele: st.qmdmg, ico: "🔥"};
             case "vt": return {acerto , dano , desc, ele: st.vtdmg, ico: "💗"};
             case "ep": return {acerto , dano , desc, ele: st.epdmg, ico: "💠"};
+            case "nd": return {acerto , dano: 0 , desc, ele: st.epdmg, ico: "💠"};
         }
         return { acerto , dano , desc };
     }
@@ -470,10 +471,10 @@ class CombatEngine {
         return { acerto , dano , crit, defesa, amov, dmov };
     }
 
-    effectTrigger(trigger, entity, tag, log){
+    effectTrigger(trigger, attacker, defender, tag, log){
         if (CombatTriggers[trigger]?.[tag]) {
             if (DEBUG) console.log('ATIVANDO TRIGGER:', tag);
-            const eff = CombatTriggers[trigger][tag](entity, log);
+            const eff = CombatTriggers[trigger][tag](attacker, defender, log);
             if (DEBUG) console.log('RESULTADO:', eff);
             if (eff) {
                 for (const key in eff) {
@@ -483,7 +484,7 @@ class CombatEngine {
                     else this[key] = eff[key];
                 }
                 if (eff?.consome) {
-                    removeStatus(entity, tag);
+                    removeStatus(attacker, tag);
                 }
             }
         }
