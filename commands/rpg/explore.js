@@ -43,7 +43,7 @@ module.exports = {
             return Math.random() * 100 < chance;
         }
 
-        if (rollPercent(20+(tile.cont*10)+(tile.rank*2))){
+        if (rollPercent(20+(tile.cont*5)+(tile.rank*2))){
             // 🔍 Busca NPCs compatíveis no mapa
             const stmt = db.prepare(`
             SELECT n.* FROM npc_encounters e

@@ -117,6 +117,7 @@ class CombatEngine {
             this.danofinal = 0;
             this.crit = (rollAtk.d1 === 10 && rollAtk.d2 === 10) ? aMove.DNCRI : 1;
             this.defesa = 0;
+            this.gm = 0;
             this.foco = "rand";
             this.movtexto = "";
             this.extexto = "";
@@ -143,6 +144,7 @@ class CombatEngine {
                 this.acerto = rollAtk.total + rollPR + bonus.acerto + mods.acerto - (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
                 this.dano = bonus.dano * this.crit;
                 this.defesa = stats.total(defender, "RE") + mods.defesa + (defender[dper] || 0);
+                this.gm =  stats.total(defender, "GM") + mods.gm ;
 
                 //Mostra o ataque utilizado e a forma que foi utilzada
                 if (DEBUG) console.log("Ataque:"+ rollAtk.total +"+"+ rollPR +"+"+ bonus.acerto +"+"+ mods.acerto +"-"+ (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0));
@@ -163,12 +165,12 @@ class CombatEngine {
 
                 //////////////////////////////////////////////
                 //Determina a defesa total e checar se tem PR
-                const dificuldade = (defender.PR <= 0) ? defender.DEF : rollDef.total + rollRun + this.defesa;
+                const dificuldade = (aMove.tipo === 5) ? this.gm : (defender.PR <= 0) ? defender.DEF : rollDef.total + rollRun + this.defesa;
                 //////////////////////////////////////
                 if (DEBUG) console.log("DEF minima:"+ defender.DEF);
                 //Mensagem do Roll de defesa
-                this.log.push(defender.PR <= 0
-                ? `🚫 ${ce.def}: ** ${dificuldade} **  \u2003 *${ce.no_pr}*`
+                this.log.push((aMove.tipo === 5) ? `🛡️ DT:**${this.gm}**`
+                : defender.PR <= 0 ? `🚫 ${ce.def}: ** ${dificuldade} **  \u2003 *${ce.no_pr}*`
                 :`🎲 ${ce.def}: ** ${dificuldade} ** \u2003 *2d10* {[${rollDef.d1}, ${rollDef.d2}] + `+
                 (rollRun > 0 ? ` *1d10* [${rollRun}] + ` : "")+
                 `${this.defesa}}`);
@@ -179,15 +181,15 @@ class CombatEngine {
                     break hitting;
                 }
                 ////Pega a parte do corpo atingida e RD da mesma///////////////
-                const bpRD = this.pickBodyPart(defender, this.foco); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
+                const bpRD = this.pickBodyPart(defender, !aMove.foco ? this.foco : aMove.foco); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
                 if (DEBUG) console.log("RD no" + defender[bpRD[1]] +":"+ defender[bpRD[0]]);
 
                 ////Calcula o Dano final e atualiza PV////////
                 this.danofinal = Math.max(Math.floor(Math.max(1,this.dano * [bpRD[2]])) - (defender.RD + defender[bpRD[0]] || 0),0);
-                defender.PV -= this.danofinal;
+                if (aMove.ELE !== "nd") defender.PV -= this.danofinal;
 
                 ////Mensagem de dano//////////////
-                this.log.push(` **${defender.nome}** ${ce.tk} **${this.danofinal}** ${bonus.ele} ${bpRD[1]} ${bonus.ico}`);
+                if (aMove.ELE !== "nd") this.log.push(` **${defender.nome}** ${ce.tk} **${this.danofinal}** ${bonus.ele} ${bpRD[1]} ${bonus.ico}`);
 
                 /////////////////////////////////////////
                 ////////ON HIT MOVE EFFECT////////////////////////////////
@@ -434,6 +436,17 @@ class CombatEngine {
                 if (DEBUG) console.log("Bonus Acerto:" + m.AC +"+"+ si +"+"+ a[m.pericia] +"-"+ Math.floor(Math.max((d - (m.ALC + es)), 0) / (it || 1))+
                     " Base Dano:"+ es +"+("+ a.NV +"x"+  m.DN + ") CritMod: " + m.DNCRI + " Alc:" + m.ALC +" Dist:"+ d);
             break;
+            case 5: /* Special (ataque sobrenatural sem evasão) Não altera distancia
+                Acerto: Mod+SinPer - (Distancia / Int)
+                Dano: Mod + Ess - RD do adversario
+                Alc: Mod*/
+                acerto = m.AC + si + Math.max(a[m.pericia], a.NV) - Math.floor(Math.max((d - (m.ALC + es)), 0) / (it || 1));
+                dano = es + (a.NV * m.DN);
+                desc = "";
+
+                if (DEBUG) console.log("Bonus Acerto:" + m.AC +"+"+ si +"+"+ Math.max(a[m.pericia], a.NV) +"-"+ Math.floor(Math.max((d - (m.ALC + es)), 0) / (it || 1))+
+                    " Base Dano:"+ es +"+("+ a.NV +"x"+  m.DN + ") CritMod: " + m.DNCRI + " Alc:" + m.ALC +" Dist:"+ d);
+            break;
         }
         switch(m.ELE){
             case "ct": return {acerto , dano , desc, ele: st.ctdmg, ico: "💥"};
@@ -444,7 +457,7 @@ class CombatEngine {
             case "qm": return {acerto , dano , desc, ele: st.qmdmg, ico: "🔥"};
             case "vt": return {acerto , dano , desc, ele: st.vtdmg, ico: "💗"};
             case "ep": return {acerto , dano , desc, ele: st.epdmg, ico: "💠"};
-            case "nd": return {acerto , dano: 0 , desc, ele: st.epdmg, ico: "💠"};
+            case "nd": return {acerto , dano: 0 , desc, ele: "", ico: ""};
         }
         return { acerto , dano , desc };
     }
@@ -456,6 +469,8 @@ class CombatEngine {
         let defesa = 0;
         let amov = 0;
         let dmov = 0;
+        let gm = 0;
+        let rm = 0;
 
         acerto -= Math.ceil(getStatusDuration(a, "STUN")/3)
         acerto -= Math.ceil(getStatusDuration(a, "NAUSEA")/3)
@@ -468,7 +483,7 @@ class CombatEngine {
         dmov -= Math.ceil(getStatusDuration(d, "PARALZ")/3)
 
         if (DEBUG) console.log("acerto:"+acerto+" dano:"+dano+" crit:"+crit+" defesa:"+defesa+" amov:"+amov+" dmov:"+dmov);
-        return { acerto , dano , crit, defesa, amov, dmov };
+        return { acerto , dano , crit, defesa, amov, dmov, gm, rm };
     }
 
     effectTrigger(trigger, attacker, defender, tag, log){
@@ -515,6 +530,7 @@ class CombatEngine {
             case "e2": return [ "RD"+part , `in its ${u.exBdpart2}`, 0.5];
             //case "e3": return [ "RD"+part , "na " + u.exBdpart3, 0.5];
             //case "e4": return [ "RD"+part , "na " + u.exBdpart4, 0.5];//just in case....
+            case "mind": return [ "RM" , `in the brain`, 1];
         }
     }
 

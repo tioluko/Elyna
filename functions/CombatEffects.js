@@ -157,10 +157,7 @@ const CombatTriggers = {
         },
         MPOISON: (acerto, defender, log) => {
             const dt = acerto;
-            const stat = total(defender, "GM")
-            const roll = r2d10();
-            const result = roll.total + stat;
-            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+            const result = total(defender, "GM")
 
             if (result >= dt) {
                 log.push(`**${defender.nome}** ${cf.psn_res}`);
@@ -189,10 +186,7 @@ const CombatTriggers = {
         },
         MNAUSEA: (acerto, defender, log) => {
             const dt = acerto;
-            const stat = total(defender, "GM")
-            const roll = r2d10();
-            const result = roll.total + stat;
-            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+            const result = total(defender, "GM")
 
             if (result >= dt) {
                 log.push(`**${defender.nome}** ${cf.nau_res}`);
