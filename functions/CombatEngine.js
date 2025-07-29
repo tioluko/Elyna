@@ -177,7 +177,7 @@ class CombatEngine {
 
                 ////Checa se acertou//////////////////////////
                 if (this.acerto < dificuldade && this.crit === 1) {
-                    this.log.push(` ${attacker.nome} ${ce.miss}❌`);
+                    this.log.push(aMove.tipo === 5 ? ` ${defender.nome} ${ce.res}❌` : ` ${attacker.nome} ${ce.miss}❌`);
                     break hitting;
                 }
                 ////Pega a parte do corpo atingida e RD da mesma///////////////

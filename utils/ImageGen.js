@@ -11,13 +11,19 @@ async function generateCombatImageBuffer(userImageUrl, npcImageUrl, userDead, np
     const cached = avatarCache.get(cacheKey);
     if (cached) return cached;
 
-    const [userRes, npcRes] = await Promise.all([
+    /*const [userRes, npcRes] = await Promise.all([
         fetch(userImageUrl),
         fetch(npcImageUrl)
     ]);
+
     const [userBuffer, npcBuffer] = await Promise.all([
         userRes.arrayBuffer(),
         npcRes.arrayBuffer()
+    ]);*/
+
+    const [userBuffer, npcBuffer] = await Promise.all([
+        fetchImageBuffer(userImageUrl),
+        fetchImageBuffer(npcImageUrl)
     ]);
 
     const [userImg, npcImg] = await Promise.all([
@@ -112,6 +118,18 @@ async function generateMiniMapImage(centerX, centerY, mapData) {
 
     mapCache.set(cacheKey, upscaled);
     return upscaled;
+}
+
+async function fetchImageBuffer(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch image from ${url} (status ${res.status})`);
+
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.startsWith('image/')) {
+        throw new Error(`URL ${url} did not return an image (got ${contentType})`);
+    }
+
+    return res.arrayBuffer();
 }
 
 

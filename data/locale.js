@@ -199,6 +199,7 @@ const ce = {
     runfail: `was unable to escape`,
     run: `ran away`,
     miss: `missed`,
+    res: `resists`,
     bal: `loses balance`
 };
 const cf = {

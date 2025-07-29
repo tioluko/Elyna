@@ -96,7 +96,7 @@ module.exports = {
         let npc = null;
         if (encounter){
             // 🔍 Busca NPCs compatíveis no mapa
-            const stmt = db.prepare(`
+            /*const stmt = db.prepare(`
             SELECT n.* FROM npc_encounters e
             JOIN npcs n ON n.id = e.npc_id
             WHERE (e.tipo = ? OR e.tipo = -1)
@@ -106,7 +106,18 @@ module.exports = {
             ORDER BY RANDOM()
             LIMIT 1
             `);
-            npc = stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1);
+            npc = stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1);*/
+
+            const stmt = db.prepare(`
+            SELECT * FROM npcs
+            WHERE tipo IN (?, -1)
+            AND cont <= ?
+            AND ocup <= ?
+            AND NV BETWEEN (? - 1) AND (? + 1)
+            ORDER BY RANDOM()
+            LIMIT 1;
+            `);
+            npc = stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1, tile.rank ?? 1);
 
             if (!npc) {
                 encounter = false;
