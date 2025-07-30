@@ -142,13 +142,13 @@ class CombatEngine {
                 hitting:{
 
                 this.acerto = rollAtk.total + rollPR + bonus.acerto + mods.acerto - (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
-                this.dano = bonus.dano * this.crit;
+                this.dano = (bonus.dano  * this.eleResMod(aMove.ELE, dtags)) * this.crit;
                 this.defesa = stats.total(defender, "RE") + mods.defesa + (defender[dper] || 0);
                 this.gm =  stats.total(defender, "GM") + mods.gm ;
 
                 //Mostra o ataque utilizado e a forma que foi utilzada
                 if (DEBUG) console.log("Ataque:"+ rollAtk.total +"+"+ rollPR +"+"+ bonus.acerto +"+"+ mods.acerto +"-"+ (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0));
-                if (DEBUG) console.log("Dano:"+ bonus.dano +"*"+ this.crit);
+                if (DEBUG) console.log("Dano "+aMove.ELE+":"+ bonus.dano +"*"+ this.eleResMod(aMove.ELE, dtags)+"*"+ this.crit);
                 if (DEBUG) console.log("Defesa:"+ stats.total(defender, "RE") +"+"+ mods.defesa +"+"+ (defender[dper]) + "Flying?"+ getStatusDuration(defender, "FLY") );
 
                 /////////////////////////////////////////////////////////////////////
@@ -532,6 +532,16 @@ class CombatEngine {
             //case "e4": return [ "RD"+part , "na " + u.exBdpart4, 0.5];//just in case....
             case "mind": return [ "RM" , `in the brain`, 1];
         }
+    }
+
+    eleResMod(element, statusArray) {
+        if (!element || !Array.isArray(statusArray)) return 1;
+
+        const keyToMatch = `RES${element.toLowerCase()}`;
+        const match = statusArray.find(([key]) =>
+        typeof key === 'string' && key.toLowerCase() === keyToMatch.toLowerCase()
+        );
+        return match ? match[1] : 1;
     }
 
     roll2d10() {
