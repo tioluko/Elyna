@@ -141,12 +141,12 @@ module.exports = {
         const roll = roll2d10();
         const totalCheck = roll.total + userSkill + user.INT;
         const passed = totalCheck >= recipe.dt;
+        const exp = Math.ceil(recipe.dt/10);
+        let lvlup = false;
 
         let resultMsg = `🎲 Craft Roll: ** ${totalCheck} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${userSkill+user.INT}} \u2003 DT:**${recipe.dt}**\n\n`;
-        resultMsg += passed ? `:star: ${cft.success} **x1 ${recipe.name}** :star:` : `❌ ${cft.fail}`;
-
         if (passed) {
-            addxp(user, Math.ceil(recipe.dt/10));
+            lvlup = addxp(user, exp);
             const existing = db.prepare(`
             SELECT id, quantidade FROM user_inventory
             WHERE user_id = ? AND item_id = ? AND equipado = 0
@@ -164,6 +164,8 @@ module.exports = {
                 `).run(user.id, recipe.result);
             }
         }
+        resultMsg += passed ? `:star: ${cft.success} **x1 ${recipe.name}**! :star:\n🏆 ${cft.got} **${exp} XP**` : `❌ ${cft.fail}`;
+        if (lvlup) resultMsg += `\n${info.lvlup}`;
 
         user = getUserData(interaction.user.id);
         console.log(`Receita: ${recipe.req_items} Resultado: ${recipe.name}`, passed ? '(SUCESSO)' : '(FALHA)');

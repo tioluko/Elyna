@@ -18,16 +18,99 @@ const { cf } = require('../data/locale.js');
  * enjoo x > -x em acerto e reação
  */
 const CombatTriggers = {
+
+    ///USER STATUS CHECK
     onTurnStart: {
-        regenerar_pm: (attacker, defender, log) => {
-            attacker.PM += 5;
-            log.push(`✨ Recuperou 5 PM com regeneração mágica`);
+        HOLD: (attacker, defender, log) => {
+            console.log("Hold at round start:",getStatusDuration(attacker, "HOLD"));
+            reduceStatus(attacker, "HOLD");
+            if (!hasStatus(attacker, "HOLD")) log.push(`**${attacker.nome}** ${cf.no_imb}`);
+            else {
+                const dt = 10 + Math.ceil(getStatusDuration(attacker, "HOLD")/2);
+                const stat = total(defender, "FOR")
+                const roll = r2d10();
+                const result = roll.total + stat;
+                log.push(`🎲 ${cf.strroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+
+                if (result >= dt) {
+                    log.push(`**${defender.nome}** ${cf.imb_res}`);
+                    removeStatus(attacker, "HOLD");
+                    console.log("Hold after round:",getStatusDuration(attacker, "HOLD"));
+                    return;
+                }else log.push(`**${attacker.nome}** ${cf.is_imb}`);
+            }
+            console.log("Hold after round:",getStatusDuration(attacker, "HOLD"));
+            return;
+        }
+    },
+    onTurnEnd: {
+        NAT_REGEN: (attacker, defender, log) => {
+            const dmg = getStatusDuration(attacker, "NAT_REGEN");
+            console.log("regen:", dmg)
+            attacker.PV += dmg;
+            log.push(`**${attacker.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
+            return;
         },
-        camuflado: (attacker, defender, log) => {
-            log.push(`🫥 ${attacker.nome} permanece camuflado...`);
+        REGEN: (attacker, defender, log) => {
+            const dmg = attacker.NV;
+            console.log("regen:", dmg)
+            attacker.PV += dmg;
+            reduceStatus(attacker, "REGEN"); // reduz 1 turno
+            log.push(`**${attacker.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
+            return;
+        },
+        POISON: (attacker, defender, log) => {
+            const dmg = Math.ceil(getStatusDuration(attacker, "POISON")/6);
+            console.log("poison power:", dmg)
+            attacker.PV -= dmg;
+            reduceStatus(attacker, "POISON"); // reduz 1 turno
+            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.psn_dmg}! 🤢`);
+            if (!hasStatus(attacker, "POISON")) log.push(`**${attacker.nome}** ${cf.no_psn}`);
+            return;
+        },
+        BLEED: (attacker, defender, log) => {
+            const dmg = Math.ceil(getStatusDuration(attacker, "BLEED")/5);
+            console.log("bleed power:", dmg)
+            attacker.PV -= dmg;
+            reduceStatus(attacker, "BLEED"); // reduz 1 turno
+            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.bld_dmg}! 🩸`);
+            if (!hasStatus(attacker, "BLEED")) log.push(`**${attacker.nome}** ${cf.no_bld}`);
+            return;
+        },
+        BURN: (attacker, defender, log) => {
+            const dmg = Math.ceil(getStatusDuration(attacker, "BURN")/7);
+            console.log("burn power:", dmg)
+            attacker.PV -= dmg;
+            reduceStatus(attacker, "BURN"); // reduz 1 turno
+            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.brn_dmg}! 🔥`);
+            if (!hasStatus(attacker, "BURN")) log.push(`**${attacker.nome}** ${cf.no_brn}`);
+            return;
+        },
+        STUN: (attacker, defender, log) => {
+            console.log("Stun at round start:",getStatusDuration(attacker, "STUN"));
+            reduceStatus(attacker, "STUN");
+            console.log("Stun after round:",getStatusDuration(attacker, "STUN"));
+            if (!hasStatus(attacker, "STUN")) log.push(`**${attacker.nome}** ${cf.no_stn}`);
+            return;
+        },
+        PARALZ: (attacker, defender, log) => {
+            console.log("Paralz at round start:",getStatusDuration(attacker, "PARALZ"));
+            reduceStatus(attacker, "PARALZ");
+            console.log("Paralz after round:",getStatusDuration(attacker, "PARALZ"));
+            if (!hasStatus(attacker, "PARALZ")) log.push(`**${attacker.nome}** ${cf.no_plz}`);
+            return;
+        },
+        NAUSEA: (attacker, defender, log) => {
+            console.log("Nausea at round start:",getStatusDuration(attacker, "NAUSEA"));
+            reduceStatus(attacker, "NAUSEA");
+            console.log("Nausea after round:",getStatusDuration(attacker, "NAUSEA"));
+            if (!hasStatus(attacker, "NAUSEA")) log.push(`**${attacker.nome}** ${cf.no_nau}`);
+            return;
         }
     },
 
+
+    ///MOVE STATUS CHECK
     onAction: {
         REC_PR: (attacker, defender, log) => {
             const max = attacker.MPR || 0;
@@ -123,6 +206,40 @@ const CombatTriggers = {
     },
 
     onHitEffect: {
+        HOLD: (acerto, defender, log) => {
+            const dt = acerto;
+            const stat = total(defender, "FOR");
+            const roll = r2d10();
+            const result = roll.total + stat;
+            log.push(`🎲 ${cf.strroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+
+            if (result >= dt) {
+                log.push(`**${defender.nome}** ${cf.imb_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "HOLD") ? `${cf.add_imb}` : `${cf.is_imb}`));
+                addStatus(defender, "HOLD", ( hasStatus(defender, "HOLD") ? Math.min(1+dt-result, 4) : 1+dt-result));
+                //addStatus(defender, "HOLD", (1+dt-result));
+                return;
+            }
+        },
+        WEB: (acerto, defender, log) => {
+            const dt = acerto;
+            const stat = total(defender, "FOR")
+            const roll = r2d10();
+            const result = roll.total + stat;
+            log.push(`🎲 ${cf.strroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+
+            if (result >= dt) {
+                log.push(`**${defender.nome}** ${cf.web_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "HOLD") ? `${cf.add_imb}` : `${cf.is_imb}`));
+                addStatus(defender, "HOLD", ( hasStatus(defender, "HOLD") ? Math.min(1+dt-result, 4) : 1+dt-result));
+                //addStatus(defender, "HOLD", (1+dt-result));
+                return;
+            }
+        },
         POISON: (attacker, defender, log) => {
             const dt = 15;
             const stat = total(defender, "RES")
@@ -141,17 +258,24 @@ const CombatTriggers = {
         },
         POISON2: (attacker, defender, log) => {
             const dt = 20;
+            const dt2 = 15;
             const stat = total(defender, "RES")
             const roll = r2d10();
             const result = roll.total + stat;
-            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+            log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DTs:**${dt},${dt2}**`);
 
             if (result >= dt) {
                 log.push(`**${defender.nome}** ${cf.psn_res}`);
                 return;
+            }else if (result >= dt2){
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "POISON") ? `${cf.add_psn}` : `${cf.is_psn}`));
+                addStatus(defender, "POISON", (2+dt-result));
+                return;
             }else {
                 log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "POISON") ? `${cf.add_psn}` : `${cf.is_psn}`));
-                addStatus(defender, "POISON", (1+dt-result));
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
+                addStatus(defender, "POISON", (2+dt-result));
+                addStatus(defender, "PARALZ", (2+dt2-result));
                 return;
             }
         },
@@ -200,72 +324,6 @@ const CombatTriggers = {
         BLEED: (attacker, defender, log) => {
             defender.PV -= 2;
             log.push(`🩸 Sofreu 2 de dano por sangramento!`);
-        }
-    },
-
-    onTurnEnd: {
-        NAT_REGEN: (attacker, defender, log) => {
-            const dmg = getStatusDuration(attacker, "NAT_REGEN");
-            console.log("regen:", dmg)
-            attacker.PV += dmg;
-            log.push(`**${attacker.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
-            return;
-        },
-        REGEN: (attacker, defender, log) => {
-            const dmg = attacker.NV;
-            console.log("regen:", dmg)
-            attacker.PV += dmg;
-            reduceStatus(attacker, "REGEN"); // reduz 1 turno
-            log.push(`**${attacker.nome}** ${cf.rest} **${dmg}** ${cf.pv} 💖`);
-            return;
-        },
-        POISON: (attacker, defender, log) => {
-            const dmg = Math.ceil(getStatusDuration(attacker, "POISON")/6);
-            console.log("poison power:", dmg)
-            attacker.PV -= dmg;
-            reduceStatus(attacker, "POISON"); // reduz 1 turno
-            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.psn_dmg}! 🤢`);
-            if (!hasStatus(attacker, "POISON")) log.push(`**${attacker.nome}** ${cf.no_psn}`);
-            return;
-        },
-        BLEED: (attacker, defender, log) => {
-            const dmg = Math.ceil(getStatusDuration(attacker, "BLEED")/5);
-            console.log("bleed power:", dmg)
-            attacker.PV -= dmg;
-            reduceStatus(attacker, "BLEED"); // reduz 1 turno
-            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.bld_dmg}! 🩸`);
-            if (!hasStatus(attacker, "BLEED")) log.push(`**${attacker.nome}** ${cf.no_bld}`);
-            return;
-        },
-        BURN: (attacker, defender, log) => {
-            const dmg = Math.ceil(getStatusDuration(attacker, "BURN")/7);
-            console.log("burn power:", dmg)
-            attacker.PV -= dmg;
-            reduceStatus(attacker, "BURN"); // reduz 1 turno
-            log.push(`**${attacker.nome}** ${cf.tk} **${dmg}** ${cf.brn_dmg}! 🔥`);
-            if (!hasStatus(attacker, "BURN")) log.push(`**${attacker.nome}** ${cf.no_brn}`);
-            return;
-        },
-        STUN: (attacker, defender, log) => {
-            console.log("Stun at round start:",getStatusDuration(attacker, "STUN"));
-            reduceStatus(attacker, "STUN");
-            console.log("Stun after round:",getStatusDuration(attacker, "STUN"));
-            if (!hasStatus(attacker, "STUN")) log.push(`**${attacker.nome}** ${cf.no_stn}`);
-            return;
-        },
-        PARALZ: (attacker, defender, log) => {
-            console.log("Paralz at round start:",getStatusDuration(attacker, "PARALZ"));
-            reduceStatus(attacker, "PARALZ");
-            console.log("Paralz after round:",getStatusDuration(attacker, "PARALZ"));
-            if (!hasStatus(attacker, "PARALZ")) log.push(`**${attacker.nome}** ${cf.no_plz}`);
-            return;
-        },
-        NAUSEA: (attacker, defender, log) => {
-            console.log("Nausea at round start:",getStatusDuration(attacker, "NAUSEA"));
-            reduceStatus(attacker, "NAUSEA");
-            console.log("Nausea after round:",getStatusDuration(attacker, "NAUSEA"));
-            if (!hasStatus(attacker, "NAUSEA")) log.push(`**${attacker.nome}** ${cf.no_nau}`);
-            return;
         }
     }
 };

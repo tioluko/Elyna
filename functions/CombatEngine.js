@@ -5,7 +5,7 @@ const { db, updateUserData, getMoveById, updateCombat } = require('../utils/db.j
 const { CombatTriggers, hasStatus, removeStatus, addStatus, reduceStatus, getStatusDuration, addDmgTypeEffect } = require('../functions/CombatEffects.js');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const { processLootFromNPC, insertToInventory } = require('../functions/LootGen.js');
-const { ce, st, cf } = require('../data/locale.js');
+const { info, ce, st, cf } = require('../data/locale.js');
 const stats = require('./stats');
 
 class CombatEngine {
@@ -67,8 +67,8 @@ class CombatEngine {
         ////////ESCOLHE MOVE DO NPC////////////////////////////////
         const npcAction = this.chooseNpcAction(this.npc);
         const npcMove = npcAction.move;
-        if (DEBUG) console.log('[DEBUG] player_move_data:', JSON.stringify(move));
-        if (DEBUG) console.log('[DEBUG] npc_move_data:', JSON.stringify(npcAction.move));
+        if (DEBUG) console.log('[DEBUG] player_move:',(move.nome),' ID:',(move.move_id),' DN:',(move.DN),' ELE:',(move.ELE),' AC:',(move.AC),' INI:',(move.INI),' RE:',(move.RE),' ALC:',(move.ALC),' EFFECT:',(move.EFFECT) );
+        if (DEBUG) console.log('[DEBUG] npc_move:', (npcAction.move.nome),' ID:',(npcAction.move.id),' DN:',(npcAction.move.DN),' ELE:',(npcAction.move.ELE),' AC:',(npcAction.move.AC),' INI:',(npcAction.move.INI),' RE:',(npcAction.move.RE),' ALC:',(npcAction.move.ALC),' EFFECT:',(npcAction.move.EFFECT) );
 
         updateCombat(this.combatId, {
             user_action: `move:${moveId}`,
@@ -77,7 +77,7 @@ class CombatEngine {
             npc_action_data: JSON.stringify(npcMove),
         });
         stats.updateNpc(this.player);
-        stats.updateNpc(this.npc)
+        stats.updateNpc(this.npc);
 
         if (DEBUG) console.timeEnd('move reading'),console.log(`Memória usada: ${((process.memoryUsage().heapUsed - startMem2) / 1024 / 1024).toFixed(2)}MB`);
 
@@ -125,9 +125,18 @@ class CombatEngine {
             ////////DEFINE FORMULAS PADRÕES POR TIPO DE AÇAO//////////////////
             const mods = this.tempMods(attacker, defender);
             const bonus = this.moveFormulae(attacker, totalDist, aMove, mods);
+
+            ////ROUND START STATUS EFFECT///////
+            for (const tag0 of tags) {
+                if (CombatTriggers.onTurnStart?.[tag0[0]]) {
+                    if (DEBUG) console.log('ATIVANDO TRIGGER:', tag0);
+                    CombatTriggers.onTurnStart[tag0[0]](attacker, defender, this.log);
+                    if (DEBUG) console.log('RESULTADO:', tag0);
+                }
+            }///////////////////////////////////
             ////////ESCREVE A SELEÇÃO NO LOG/////////////////////////////////
             this.movtexto = bonus.desc;
-            this.log.push(`**${attacker.nome}** ${this.movtexto} `+
+            if (!hasStatus(attacker, "HOLD")) this.log.push(`**${attacker.nome}** ${this.movtexto} `+
             (rollPR > 0 ? ` ${ce.pr_eff}` :"")+
             ` ${ce.use} ${aMove.nome}!`);
 
@@ -138,7 +147,7 @@ class CombatEngine {
 
             /////////////////////////////////////////////
             //Checa se o move é SELF (tipo 0) e skippa tudo daqui até o endround effect
-            if (aMove.tipo > 0){
+            if (aMove.tipo > 0 && !hasStatus(attacker, "HOLD")){
                 hitting:{
 
                 this.acerto = rollAtk.total + rollPR + bonus.acerto + mods.acerto - (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
@@ -276,7 +285,7 @@ class CombatEngine {
             let loot = [];
             if (win) {
                 exp = this.npc.NV || 1;
-                stats.addxp(this.player, exp);
+                const lvlup = stats.addxp(this.player, exp);
 
                 const loot = processLootFromNPC(this.npc); // <- captura resultado
                 console.log("drops filtrados:"+JSON.stringify(loot));
@@ -285,6 +294,7 @@ class CombatEngine {
 
                 // loot = generateLoot(npc); // <- Loot futura aqui?
                 this.log.push(`\n🏆 ${ce.vic}! **${this.player.nome}** ${ce.got} **${exp} XP**!`);
+                if (lvlup) this.log.push(`\n${info.lvlup}`);
                 if (loot.length > 0) this.log.push(`\n📦 ${lootText} ${ce.on} ${this.npc.nome}`);
             }
             if (defeat || draw) {this.log.push(`\n⚰️ ${ce.dft}`);}

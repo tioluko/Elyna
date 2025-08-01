@@ -130,7 +130,7 @@ module.exports = {
             const player = JSON.parse(combat.user_data); //Tentar recarregar os dados do user pra atualizar esse troço...
 
             const can_use = stats.handleSkillCost(player, selected, pr, fc);
-            if (DEBUG) console.log("PM/PR antes>",player.PM, player.PR, can_use);
+            //if (DEBUG) console.log("PM/PR antes>",player.PM, player.PR, can_use);
             if (!can_use){
                 return interaction.reply({ content: act.cant_pay, ephemeral: true });
             }
@@ -138,7 +138,7 @@ module.exports = {
             if (DEBUG) console.log(fc);
             if (fc || pr){
                 const status = typeof player.STATUS === 'string' ? JSON.parse(player.STATUS) : player.STATUS || [];
-                if (DEBUG) console.log(status);
+                //if (DEBUG) console.log(status);
                 if (fc)status.push(["FOCUS"+fc, 1]);
                 if (pr)status.push(["PR_BOOST", 1]);
                 player.STATUS = JSON.stringify(status);
@@ -148,8 +148,8 @@ module.exports = {
 
             updateCombatUserData(combat.id, player);
             if (DEBUG) console.log(JSON.parse(getCombatState(user.id).user_data).STATUS);
-            if (DEBUG) console.log("PM/PRdepois>",player.PM, player.PR);
-            if (DEBUG) console.log("pr usado?",pr);
+            //if (DEBUG) console.log("PM/PRdepois>",player.PM, player.PR);
+            //if (DEBUG) console.log("pr usado?",pr);
 
             if (DEBUG) console.timeEnd('action setup'),console.log(`Memória usada: ${((process.memoryUsage().heapUsed - startMem3) / 1024 / 1024).toFixed(2)}MB`);
 

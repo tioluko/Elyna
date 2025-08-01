@@ -12,6 +12,7 @@ const info = {
     on_event: `Impossible, resolve your current situation first ( /act )`,
     on_rest: `Impossible, you are resting ( /rest )`,
     spam: `:star: Calm down buddy... I need to breathe between commands :star:`,
+    lvlup: `⭐ ⭐  **LEVEL UP!** ⭐ ⭐  \n 🎉 You ascended! Use **/bp**  and **/pp** to upgrade your character !`,
 
     //Mensagens de erro erro bug etc
     _combat_not_found_: `⚠️ Combat not found or in an invalid state.`,
@@ -75,6 +76,7 @@ const cft ={
     onlyhave: `to craft an item, you only have`,
     success: `You successfully crafted`,
     fail: `You failed to craft it...`,
+    got: `You gained`,
 };
 const ficha = {
     //Itens do menu ficha
@@ -209,8 +211,11 @@ const cf = {
     pr: `RP`,
     running: `is trying to run away`,
     resroll: `Resistance Roll`,
+    strroll: `Strength Roll`,
     psn_res: `resists the poison`,
     nau_res: `resists the nausea`,
+    imb_res: `broke free from the immobilization`,
+    web_res: `broke free from the webs`,
     the_psn: `The poison in`,
     intensifies: `intensifies`,
     is_psn: `is poisoned`,
@@ -219,6 +224,7 @@ const cf = {
     is_stn: `is stunned`,
     is_plz: `is paralyzed`,
     is_nau: `is nauseated`,
+    is_imb: `is immobilized`,
     tk: `takes`,
     add_psn: `is further poisoned`,
     add_bld: `is bleeding even more`,
@@ -226,6 +232,7 @@ const cf = {
     add_stn: `is further stunned`,
     add_plz: `is further paralyzed`,
     add_nau: `is further nauseated`,
+    add_imb: `is further immobilized`,
     psn_dmg: `poison damage`,
     bld_dmg: `bleed damage`,
     brn_dmg: `flame damage`,
@@ -235,6 +242,7 @@ const cf = {
     no_stn: `is no longer stunned.`,
     no_plz: `is no longer paralyzed.`,
     no_nau: `is no longer with nausea.`,
+    no_imb: `is no longer immobilized.`,
 };
 
 module.exports = {

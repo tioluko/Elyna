@@ -67,6 +67,7 @@ function addxp(u, amt) {
 
   if (DEBUG) console.log(`XP recebido: +${amt} → NV ${u.NV} ⇨ ${nv} (${LvUp}x up)`);
   updateUserData(u.id, updates);
+  return LvUp > 0 ? true : false;
 }
 
 function calculateStats(u) {
