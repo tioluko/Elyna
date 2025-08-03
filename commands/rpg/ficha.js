@@ -16,12 +16,24 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("profile")
     .setDescription("Display your character sheet")
-    .setNameLocalizations({
-      "pt-BR": "ficha",
-    })
-    .setDescriptionLocalizations({
-      "pt-BR": "Mostra a ficha do seu personagem",
-    }),
+    .setNameLocalizations({"pt-BR": "ficha",})
+    .setDescriptionLocalizations({"pt-BR": "Mostra a ficha do seu personagem",})
+    .addIntegerOption(option =>
+    option.setName('page')
+    .setDescription('Pick a sheet page')
+    .setDescriptionLocalizations({ "pt-BR": "Abra em uma pagina específica", })
+    .setAutocomplete(true)
+    ),
+
+  async autocomplete(interaction) {
+    await interaction.respond(
+      [
+        { name: ficha.skills, value: 1 },
+        { name: ficha.perks, value: 2 },
+        { name: ficha.combat_stats, value: 3 },
+        { name: ficha.inventory, value: 4 },
+      ].slice(0, 25));
+  },
 
   async execute(interaction) {
     const user = getUserData(interaction.user.id);
@@ -30,7 +42,10 @@ module.exports = {
 
     const perks = getUserPerks(interaction.user.id);
     const inv = getUserInventory(interaction.user.id);
-    console.log(perks);
+    const movesData = getUserMoves(interaction.user.id);
+    const initpage = interaction.options.getInteger("page") ?? 0;
+    console.log("page "+initpage);
+    //console.log(perks);
     // Atualiza os valores derivados
     stats.modApply(user);
     stats.updatePerkMoves(user.id);
@@ -54,16 +69,7 @@ module.exports = {
       acc: "🔸 ",
     };
     const perkorder = ["racial", "natural", "sobrenatural"];
-    const equipSlots = [
-      "head",
-      "torso",
-      "arms",
-      "legs",
-      "rhand",
-      "lhand",
-      "hands",
-      "acc",
-    ];
+    const equipSlots = ["head","torso","arms","legs","rhand","lhand","hands","acc"];
     const equipped = {};
     const backpack = [];
 
@@ -129,6 +135,43 @@ module.exports = {
       const itemList = backpack.map((i) => `• **${i.nome}** x${i.quantidade}`)
       .join("\n");
       //const itemList = backpack.map(i => `• **${i.nome}** x${i.quantidade} \n-# ${i.descricao}`).join('\n');
+
+      const moveList = movesData.map(m => {
+        let origemLabel = 'basic';
+
+        if (m.origem?.startsWith("equip:")) {
+          const itemId = parseInt(m.origem.split(":")[1]);
+          const item = inv.find(i => i.id === itemId);
+          origemLabel = item?.nome || 'equip';
+        } else if (m.origem?.startsWith("perk:")) {
+          const perkId = parseInt(m.origem.split(":")[1]);
+          const perk = perks.find(p => p.perk_id === perkId);
+          origemLabel = perk?.nome || 'perk';
+        }
+
+        //const danoStr = m.DN ? `Dano: ${m.DN}${m.ELE ? ` (${m.ELE})` : ''}` : '';
+        let danoStr = '';
+        switch (m.tipo) {
+          case 1:
+            danoStr = `Dano: **${m.DN + u.FOR}**${m.ELE ? ` (${m.ELE})` : ''}`;
+            break;
+          case 2:
+            danoStr = `Dano: **${m.DN + u.FOR}**${m.ELE ? ` (${m.ELE})` : ''}`;
+            break;
+          case 3:
+            danoStr = `Dano: **${m.DN}**${m.ELE ? ` (${m.ELE})` : ''}`;
+            break;
+          case 4:
+            danoStr = `Dano: **${Math.floor(u.ESS + (u.NV * m.DN))}**${m.ELE ? ` (${m.ELE})` : ''}`;
+            break;
+          case 5:
+            danoStr = `Dano: **${Math.floor(u.ESS + (u.NV * m.DN))}**${m.ELE ? ` (${m.ELE})` : ''}`;
+            break;
+          default:
+            danoStr = ''; // tipo 0 ou indefinido
+        }
+        return `**${m.nome}**  ${danoStr} <${origemLabel}${m.tipo !== 0 ? ` (${st[m.pericia.toLowerCase()]})>` : '>'}`;
+      }).join('\n') || ficha.empty;
 
       let bar = ["", "", "", ""];
       let blk = "";
@@ -250,6 +293,8 @@ module.exports = {
                 {name: `***${ficha.combat_stats}***`,value: `-# (${st.rd} = ${st.rd_})`,},
                          {name: `***${ficha.equip}***`, value: equipList || ficha.empty },
                          {name: "\u200B", value: "\u200B" },
+                         {name: `***${ficha.moves}***`, value: moveList },
+                         {name: "\u200B", value: "\u200B" },
               ),
               );
               else if (i == 4)
@@ -269,6 +314,6 @@ module.exports = {
               ),
           );
       }
-      await pagination(interaction, embeds);
+      await pagination(interaction, embeds, initpage);
     },
 };

@@ -1,6 +1,6 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
 
-module.exports = async (interaction, pages, time = 30 * 1000) => {
+module.exports = async (interaction, pages, startPage = 0, time = 30 * 1000) => {
   
   try {
     if (!interaction | !pages | !pages > 0) throw new Error('[pagination.js] Invalid args');
@@ -11,7 +11,9 @@ module.exports = async (interaction, pages, time = 30 * 1000) => {
       return await interaction.editReply({ embeds: pages, components: [], fetchReply: true});
     }
 
-    var index = 0;
+    //var index = 0;
+    let index = Math.max(0, Math.min(startPage, pages.length - 1)); // garante que o índice está dentro dos limites
+
 
     const first = new ButtonBuilder()
     .setCustomId('pagefirst')
@@ -56,21 +58,14 @@ module.exports = async (interaction, pages, time = 30 * 1000) => {
       await i.deferUpdate();
 
       if (i.customId === 'pagefirst') index = 0;
+      else if (i.customId === 'pageprev' && index > 0) index--;
+      else if (i.customId === 'pagenext' && index < pages.length - 1) index++;
+      else if (i.customId === 'pagelast') index = pages.length - 1;
 
-      if (i.customId === 'pageprev') {
-        if (index > 0) index--;
-
-      } else if (i.customId === 'pagenext') {
-        if (index < pages.length - 1) index++;
-      
-      } else if (i.customId === 'pagelast') {
-        index = pages.length -1;
-      }
       first.setDisabled(index === 0);
       previous.setDisabled(index === 0);
       next.setDisabled(index === pages.length - 1);
       last.setDisabled(index === pages.length - 1);
-
       pageCount.setLabel(`${index + 1}/${pages.length}`);
 
       await msg.edit({ embeds: [pages[index]], components: [buttons] }).catch(err => {});

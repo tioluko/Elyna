@@ -46,7 +46,8 @@ const eq ={
     inv_opt: `Invalid option`,
     put: `You equipped`,
     off: `You removed`,
-    use: `You consumed`
+    use: `You consumed`,
+    drop: `You discarded`,
 };
 const map ={
     encounter: `is attacking you! Use **/act** to deal with it!`,

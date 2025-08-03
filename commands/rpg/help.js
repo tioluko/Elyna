@@ -24,7 +24,7 @@ module.exports = {
             `**/equip**  Put on an equipment from your inventory.\n`+
             `**/unequip**  Remove an equipped item and put it back into your inventory.\n`+
             `**/use**  Use a consumable item in your inventory.\n`+
-            `~~**/drop**  Throw away an item from your inventory. (Irreversible)~~ <Disabled>\n`+
+            `**/drop**  Throw away an item from your inventory. (Irreversible)\n`+
             `**/craft**  Attempt to create an item. It costs 2 SPs and you're awarded some XP if you're successful.\n`+
             `->use the "recipe" option to only show the required items to create it.\n`+
             `(The autocomplete will show only what you can do with your Skill, but you will still need the required items)\n\n`+
