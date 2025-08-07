@@ -27,13 +27,13 @@ const CombatTriggers = {
             if (!hasStatus(attacker, "HOLD")) log.push(`**${attacker.nome}** ${cf.no_imb}`);
             else {
                 const dt = 10 + Math.ceil(getStatusDuration(attacker, "HOLD")/2);
-                const stat = total(defender, "FOR")
+                const stat = total(attacker, "FOR")
                 const roll = r2d10();
                 const result = roll.total + stat;
                 log.push(`🎲 ${cf.strroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
 
                 if (result >= dt) {
-                    log.push(`**${defender.nome}** ${cf.imb_res}`);
+                    log.push(`**${attacker.nome}** ${cf.imb_res}`);
                     removeStatus(attacker, "HOLD");
                     console.log("Hold after round:",getStatusDuration(attacker, "HOLD"));
                     return;
@@ -412,6 +412,41 @@ function addDmgTypeEffect (entity, ele, log, pow = 1 ){
         }case "ep": return;
     }
 }
+
+function addLimbDmgEffect (entity, limb, log, pow = 1 ){
+    switch (limb) {
+        case "right arm": {
+            if (getStatusDuration(entity, "INJ_BD") < 2) {
+                log.push (`⚠️ **${entity.nome}** `+ ((getStatusDuration(entity, "INJ_BD")+pow) >= 2 ? `${cf.brk_bd}` : `${cf.inj_bd}`));
+                addStatus(entity, "INJ_BD", pow);
+            }return;
+        }case "left arm": {
+            if (getStatusDuration(entity, "INJ_BE") < 2) {
+                log.push (`⚠️ **${entity.nome}** `+ ((getStatusDuration(entity, "INJ_BE")+pow) >= 2 ? `${cf.brk_be}` : `${cf.inj_be}`));
+                addStatus(entity, "INJ_BE", pow);
+            }return;
+        }case "right leg": {
+            if (getStatusDuration(entity, "INJ_PD") < 2) {
+                log.push (`⚠️ **${entity.nome}** `+ ((getStatusDuration(entity, "INJ_PD")+pow) >= 2 ? `${cf.brk_pd}` : `${cf.inj_pd}`));
+                addStatus(entity, "INJ_PD", pow);
+            }return;
+        }case "left leg": {
+            if (getStatusDuration(entity, "INJ_PE") < 2) {
+                log.push (`⚠️ **${entity.nome}** `+ ((getStatusDuration(entity, "INJ_PE")+pow) >= 2 ? `${cf.brk_pe}` : `${cf.inj_pe}`));
+                addStatus(entity, "INJ_PE", pow);
+            }return;
+        }
+        case "right wing":
+        case "left wing": {
+            if (hasStatus(entity, "FLY")){
+                reduceStatus(entity, "FLY", pow)
+                log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "FLY") ? `${cf.no_fly}` : `${cf.inj_wg}`));
+            }return;
+        }
+        return;
+    }
+}
+
 /*function hasStatus(entity, tag) {
  *    const status = JSON.parse(entity.STATUS || '[]');
  *    return status.includes(tag);
@@ -437,4 +472,4 @@ function r2d10() {
         return { d1, d2, total };
 }
 
-module.exports = { CombatTriggers, hasStatus, addStatus, removeStatus, reduceStatus, getStatusDuration, addDmgTypeEffect };
+module.exports = { CombatTriggers, hasStatus, addStatus, removeStatus, reduceStatus, getStatusDuration, addDmgTypeEffect, addLimbDmgEffect };

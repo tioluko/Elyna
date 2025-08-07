@@ -47,6 +47,16 @@ function createCombat(userId, npcId) {
     VALUES (?, ?, ?, ?, 0, 'waiting')
     `).run(userId, npcId, userDataJSON, npcDataJSON);
 
+    /*//Deleta combate antigo
+    db.prepare(`
+    DELETE FROM combat
+    WHERE id IN (
+        SELECT id FROM combat
+        ORDER BY id ASC
+        LIMIT (SELECT COUNT(*) - 100 FROM combat)
+    )
+    `).run();*/
+
     // Atualiza evento do jogador
     db.prepare('UPDATE users SET EVENT = ? WHERE id = ?').run(`combate:${result.lastInsertRowid}`, userId);
 

@@ -244,6 +244,17 @@ const cf = {
     no_plz: `is no longer paralyzed.`,
     no_nau: `is no longer with nausea.`,
     no_imb: `is no longer immobilized.`,
+    inj_bd: `right arm is injured.`,
+    inj_be: `left arm is injured.`,
+    inj_pd: `right leg is injured.`,
+    inj_pe: `left leg is injured.`,
+    inj_wg: `wing is injured.`,
+    brk_bd: `right arm is broken.`,
+    brk_be: `left arm is broken.`,
+    brk_pd: `right leg is broken.`,
+    brk_pe: `left leg is broken.`,
+    brk_pe: `left leg is broken.`,
+    no_fly: `is incapable of flying.`,
 };
 
 module.exports = {

@@ -2,7 +2,7 @@ const { DEBUG } = require('../config.js');
 const { cloneDeep } = require('lodash');
 const { generateCombatImageBuffer } = require('../utils/ImageGen.js');
 const { db, updateUserData, getMoveById, updateCombat } = require('../utils/db.js');
-const { CombatTriggers, hasStatus, removeStatus, addStatus, reduceStatus, getStatusDuration, addDmgTypeEffect } = require('../functions/CombatEffects.js');
+const { CombatTriggers, hasStatus, removeStatus, addStatus, reduceStatus, getStatusDuration, addDmgTypeEffect, addLimbDmgEffect } = require('../functions/CombatEffects.js');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const { processLootFromNPC, insertToInventory } = require('../functions/LootGen.js');
 const { info, ce, st, cf } = require('../data/locale.js');
@@ -214,6 +214,8 @@ class CombatEngine {
                 if (Math.floor(this.danofinal >= (stats.total(defender, "RES")*3))) addDmgTypeEffect(defender, aMove.ELE, this.log, 2);
                 else if (Math.floor(this.danofinal >= (stats.total(defender, "RES")*2))) addDmgTypeEffect(defender, aMove.ELE, this.log);
                 /////////////////////////////////////////
+                // LIMB DAMAGE
+                if ( Math.floor(this.danofinal >= stats.total(defender, "RES"))) addLimbDmgEffect(defender, bpRD[3], this.log);
 
                 //////////////////////////////////
                 ////Se ultrapassou EQ, perde PR
@@ -357,12 +359,13 @@ class CombatEngine {
 
 
     getDist(attacker, amove, defender, dmove) {
-        const adist = amove.direcao * (-(attacker.MOV+attacker.modMOV || 0));
-        const ddist = dmove.direcao * (-(defender.MOV+defender.modMOV || 0));
+        //const adist = hasStatus(attacker, "HOLD") ? 0 : amove.direcao * (-(attacker.MOV+attacker.modMOV || 0));
+        //const ddist = hasStatus(defender, "HOLD") ? 0 : dmove.direcao * (-(defender.MOV+defender.modMOV || 0));
+        const adist = hasStatus(attacker, "HOLD") ? 0 : amove.direcao * (- Math.max(stats.total(attacker, "MOV") - Math.ceil(getStatusDuration(attacker, "PARALZ")/3),0));
+        const ddist = hasStatus(defender, "HOLD") ? 0 : dmove.direcao * (- Math.max(stats.total(defender, "MOV") - Math.ceil(getStatusDuration(defender, "PARALZ")/3),0));
         const totalDist = adist + ddist;
         return totalDist;
     }
-
     defineTurnOrder (user, npc, userMove, npcMove) {
 
         console.log(hasStatus(user, "STUN"));
@@ -397,14 +400,15 @@ class CombatEngine {
                 Acerto: Mod+Agi+Pericia + (Alc - Delta)    Delta = Distancia extra percorrida (acima do MOV) necessária para alcancar o alvo
                 Dano: Mod + For + (Dist/2) - RD do adversario Dist= Distancia percorrida para alcancar o alvo (max=Mov) Math.max(0, Math.round(Math.min(mov + dist, mov) / 2))
                 Alc: Mod*/
-                acerto = m.AC + ag + a[m.pericia] + Math.floor(Math.min((m.ALC + dd),dd/4));
+                //acerto = m.AC + ag + a[m.pericia] + Math.floor(Math.min((m.ALC + dd),dd/4)); <- versão com bonus de acerto quando ambos tão bem perto
+                acerto = m.AC + ag + a[m.pericia] + Math.floor(Math.min((m.ALC + dd),0));
                 dano = m.DN + fo + Math.max(0, Math.floor(Math.min(mv + d, mv) / 2));
                 desc =    d < 0 ? ce.c0
                 : d === 0 ? ce.c1
                 : d < 3 ? ce.c2
                 : ce.c3;
 
-                if (DEBUG) console.log("BonusAcerto:" + m.AC +"+"+ ag +"+"+ a[m.pericia] +"+"+ Math.floor(Math.min((m.ALC + dd),dd/4))+
+                if (DEBUG) console.log("BonusAcerto:" + m.AC +"+"+ ag +"+"+ a[m.pericia] +"+"+ Math.floor(Math.min((m.ALC + dd),0))+
                     " Base Dano:"+ m.DN +"+"+ fo +"+"+  Math.max(0, Math.floor(Math.min(mv + d, mv) / 2)) + " CritMod:" +m.DNCRI);
             break;
             case 2: /*RangeA (recua e ataca) Arco/Arremesso Aumenta distancia em MOV
@@ -482,15 +486,13 @@ class CombatEngine {
         let gm = 0;
         let rm = 0;
 
-        acerto -= Math.ceil(getStatusDuration(a, "STUN")/3)
-        acerto -= Math.ceil(getStatusDuration(a, "NAUSEA")/3)
+        acerto -= ( Math.ceil(getStatusDuration(a, "STUN")/3) + Math.ceil(getStatusDuration(a, "NAUSEA")/3) + Math.min(getStatusDuration(a, "INJ_BD"),2) + Math.min(getStatusDuration(a, "INJ_BE"),2) )
 
-        defesa -= Math.ceil(getStatusDuration(d, "PARALZ")/3)
-        defesa -= Math.ceil(getStatusDuration(d, "NAUSEA")/3)
+        defesa -= ( Math.ceil(getStatusDuration(d, "PARALZ")/3) + Math.ceil(getStatusDuration(d, "NAUSEA")/3) + Math.min(getStatusDuration(d, "INJ_PD"),2) + Math.min(getStatusDuration(d, "INJ_PE"),2) )
 
-        amov -= Math.ceil(getStatusDuration(a, "PARALZ")/3)
+        amov -= ( Math.ceil(getStatusDuration(a, "PARALZ")/3) + getStatusDuration(a, "INJ_PD") + getStatusDuration(a, "INJ_PE") )
 
-        dmov -= Math.ceil(getStatusDuration(d, "PARALZ")/3)
+        dmov -= ( Math.ceil(getStatusDuration(d, "PARALZ")/3) + getStatusDuration(d, "INJ_PD") + getStatusDuration(d, "INJ_PE") )
 
         if (DEBUG) console.log("acerto:"+acerto+" dano:"+dano+" crit:"+crit+" defesa:"+defesa+" amov:"+amov+" dmov:"+dmov);
         return { acerto , dano , crit, defesa, amov, dmov, gm, rm };
@@ -530,17 +532,17 @@ class CombatEngine {
 
         if (DEBUG) console.log(f +" -> "+ part);
         switch (part) {
-            case "cb": return [ "RD"+part , `in the head`, 1.5];
-            case "tr": return [ "RD"+part , `in the body`, 1];
-            case "bd": return [ "RD"+part , `in the right arm`, 0.5];
-            case "be": return [ "RD"+part , `in the left arm`, 0.5];
-            case "pd": return [ "RD"+part , `in the right leg`, 0.5];
-            case "pe": return [ "RD"+part , `in the left leg`, 0.5];
-            case "e1": return [ "RD"+part , `in its ${u.exBdpart1}`, 0.5];
-            case "e2": return [ "RD"+part , `in its ${u.exBdpart2}`, 0.5];
+            case "cb": return [ "RD"+part , `in the head`, 1.5, "head"];
+            case "tr": return [ "RD"+part , `in the body`, 1, "body"];
+            case "bd": return [ "RD"+part , `in the right arm`, 0.5, "right arm"];
+            case "be": return [ "RD"+part , `in the left arm`, 0.5, "left arm"];
+            case "pd": return [ "RD"+part , `in the right leg`, 0.5, "right leg"];
+            case "pe": return [ "RD"+part , `in the left leg`, 0.5, "left leg"];
+            case "e1": return [ "RD"+part , `in its ${u.exBdpart1}`, 0.5, `${u.exBdpart1}`];
+            case "e2": return [ "RD"+part , `in its ${u.exBdpart2}`, 0.5, `${u.exBdpart2}`];
             //case "e3": return [ "RD"+part , "na " + u.exBdpart3, 0.5];
             //case "e4": return [ "RD"+part , "na " + u.exBdpart4, 0.5];//just in case....
-            case "mind": return [ "RM" , `in the brain`, 1];
+            case "mind": return [ "RM" , `in the brain`, 1, "mind"];
         }
     }
 
