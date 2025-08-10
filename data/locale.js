@@ -202,6 +202,7 @@ const ce = {
     runfail: `was unable to escape`,
     run: `ran away`,
     miss: `missed`,
+    block: `blocked the attack`,
     res: `resists`,
     bal: `loses balance`
 };
@@ -211,6 +212,7 @@ const cf = {
     pv: `HP`,
     pr: `RP`,
     running: `is trying to run away`,
+    guard: `is on a defensive stance`,
     resroll: `Resistance Roll`,
     strroll: `Strength Roll`,
     psn_res: `resists the poison`,
@@ -244,6 +246,7 @@ const cf = {
     no_plz: `is no longer paralyzed.`,
     no_nau: `is no longer with nausea.`,
     no_imb: `is no longer immobilized.`,
+    no_bld: `is no longer bleeding.`,
     inj_bd: `right arm is injured.`,
     inj_be: `left arm is injured.`,
     inj_pd: `right leg is injured.`,

@@ -122,10 +122,6 @@ class CombatEngine {
             this.movtexto = "";
             this.extexto = "";
 
-            ////////DEFINE FORMULAS PADRÕES POR TIPO DE AÇAO//////////////////
-            const mods = this.tempMods(attacker, defender);
-            const bonus = this.moveFormulae(attacker, totalDist, aMove, mods);
-
             ////ROUND START STATUS EFFECT///////
             for (const tag0 of tags) {
                 if (CombatTriggers.onTurnStart?.[tag0[0]]) {
@@ -134,21 +130,27 @@ class CombatEngine {
                     if (DEBUG) console.log('RESULTADO:', tag0);
                 }
             }///////////////////////////////////
-            ////////ESCREVE A SELEÇÃO NO LOG/////////////////////////////////
-            this.movtexto = bonus.desc;
-            if (!hasStatus(attacker, "HOLD")) this.log.push(`**${attacker.nome}** ${this.movtexto} `+
-            (rollPR > 0 ? ` ${ce.pr_eff}` :"")+
-            ` ${ce.use} ${aMove.nome}!`);
-
             ////////ON ACTION MOVE EFFECT////////////////////////////////
             if (DEBUG) console.log('MOVE EFFECT:', effect);
             for (const tag1 of tags) {this.effectTrigger("onAction", attacker, defender, tag1, this.log)}
             /////////////////////////////////////////////
 
+            ////////DEFINE FORMULAS PADRÕES POR TIPO DE AÇAO,BONUS E MODIFICADORES///
+            const mods = this.tempMods(attacker, defender);
+            const bonus = this.moveFormulae(attacker, totalDist, aMove, mods);
+
+            ////////ESCREVE A SELEÇÃO NO LOG/////////////////////////////////
+            this.movtexto = bonus.desc;
+            if (!hasStatus(attacker, "HOLD")) this.log.push(`**${attacker.nome}** ${this.movtexto} `+
+            (rollPR > 0 ? ` ${ce.pr_eff}` :"")+
+            ` ${ce.use} ${aMove.nome}!${this.extexto}`);
+
             /////////////////////////////////////////////
             //Checa se o move é SELF (tipo 0) e skippa tudo daqui até o endround effect
             if (aMove.tipo > 0 && !hasStatus(attacker, "HOLD")){
-                hitting:{
+                let hit = true;
+                let touch = true;
+                //hitting:{
 
                 this.acerto = rollAtk.total + rollPR + bonus.acerto + mods.acerto - (aMove.tipo === 1 ? (getStatusDuration(defender, "FLY")*2) : 0);
                 this.dano = (bonus.dano  * this.eleResMod(aMove.ELE, dtags)) * this.crit;
@@ -174,67 +176,71 @@ class CombatEngine {
 
                 //////////////////////////////////////////////
                 //Determina a defesa total e checar se tem PR
-                const dificuldade = (aMove.tipo === 5) ? this.gm : (defender.PR <= 0) ? defender.DEF : rollDef.total + rollRun + this.defesa;
+                const dificuldade = (aMove.tipo === 5) ? this.gm : (defender.PR <= 0) && !hasStatus(defender, "GUARD") ? defender.DEF : rollDef.total + rollRun + this.defesa;
                 //////////////////////////////////////
                 if (DEBUG) console.log("DEF minima:"+ defender.DEF);
                 //Mensagem do Roll de defesa
                 this.log.push((aMove.tipo === 5) ? `🛡️ DT:**${this.gm}**`
-                : defender.PR <= 0 ? `🚫 ${ce.def}: ** ${dificuldade} **  \u2003 *${ce.no_pr}*`
+                : defender.PR <= 0 && !hasStatus(defender, "GUARD") ? `🚫 ${ce.def}: ** ${dificuldade} **  \u2003 *${ce.no_pr}*`
                 :`🎲 ${ce.def}: ** ${dificuldade} ** \u2003 *2d10* {[${rollDef.d1}, ${rollDef.d2}] + `+
                 (rollRun > 0 ? ` *1d10* [${rollRun}] + ` : "")+
                 `${this.defesa}}`);
 
                 ////Checa se acertou//////////////////////////
                 if (this.acerto < dificuldade && this.crit === 1) {
-                    this.log.push(aMove.tipo === 5 ? ` ${defender.nome} ${ce.res}❌` : ` ${attacker.nome} ${ce.miss}❌`);
-                    break hitting;
+                    this.log.push(aMove.tipo === 5 ? ` ${defender.nome} ${ce.res}❌` : hasStatus(defender, "GUARD") ? ` ${defender.nome} ${ce.block}❌` : ` ${attacker.nome} ${ce.miss}❌`);
+                    hit = false;
+                    if (!hasStatus(defender, "GUARD")) touch = false;
+                    //break hitting;
                 }
                 ////Pega a parte do corpo atingida e RD da mesma///////////////
                 const bpRD = this.pickBodyPart(defender, !aMove.foco ? this.foco : aMove.foco); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
                 if (DEBUG) console.log("RD no" + defender[bpRD[1]] +":"+ defender[bpRD[0]]);
 
-                ////Calcula o Dano final e atualiza PV////////
-                this.danofinal = Math.max(Math.floor(Math.max(1,this.dano * [bpRD[2]])) - (defender.RD + defender[bpRD[0]] || 0),0);
-                if (aMove.ELE !== "nd") defender.PV -= this.danofinal;
+                if (hit) {
+                    ////Calcula o Dano final e atualiza PV////////
+                    this.danofinal = Math.max(Math.floor(Math.max(1,this.dano * [bpRD[2]])) - (defender.RD + defender[bpRD[0]] || 0),0);
+                    if (aMove.ELE !== "nd") defender.PV -= this.danofinal;
 
-                ////Mensagem de dano//////////////
-                if (aMove.ELE !== "nd") this.log.push(` **${defender.nome}** ${ce.tk} **${this.danofinal}** ${bonus.ele} ${bpRD[1]} ${bonus.ico}`);
+                    ////Mensagem de dano//////////////
+                    if (aMove.ELE !== "nd") this.log.push(` **${defender.nome}** ${ce.tk} **${this.danofinal}** ${bonus.ele} ${bpRD[1]} ${bonus.ico}`);
 
-                /////////////////////////////////////////
-                ////////ON HIT MOVE EFFECT////////////////////////////////
-                if (DEBUG) console.log('HIT EFFECT:', effect);
-                for (const tag3 of tags) {this.effectTrigger("onHitEffect", this.acerto, defender, tag3, this.log)}
-                /////////////////////////////////////////
+                    /////////////////////////////////////////
+                    ////////ON HIT MOVE EFFECT////////////////////////////////
+                    if (DEBUG) console.log('HIT EFFECT:', effect);
+                    for (const tag3 of tags) {this.effectTrigger("onHitEffect", this.acerto, defender, tag3, this.log)}
+                    /////////////////////////////////////////
 
-                /////////////////////////////////////////
-                // DEFENDER STATUS ON HIT
-                if (hasStatus(defender, "FUGA")) removeStatus(defender, "FUGA"), this.log.push(`⚠️ **${defender.nome}** ${ce.runfail}`);
-                /////////////////////////////////////////
-                // HEAVY DAMAGE
-                if (Math.floor(this.danofinal >= (stats.total(defender, "RES")*3))) addDmgTypeEffect(defender, aMove.ELE, this.log, 2);
-                else if (Math.floor(this.danofinal >= (stats.total(defender, "RES")*2))) addDmgTypeEffect(defender, aMove.ELE, this.log);
-                /////////////////////////////////////////
-                // LIMB DAMAGE
-                if ( Math.floor(this.danofinal >= stats.total(defender, "RES"))) addLimbDmgEffect(defender, bpRD[3], this.log);
-
-                //////////////////////////////////
-                ////Se ultrapassou EQ, perde PR
-                if (Math.floor(this.dano * [bpRD[2]]) > defender.EQ) {
-                    defender.PR -= 1;
-                    this.log.push(`⚠️ **${defender.nome}** ${ce.bal}`);
+                    /////////////////////////////////////////
+                    // DEFENDER STATUS ON HIT
+                    if (hasStatus(defender, "FUGA")) removeStatus(defender, "FUGA"), this.log.push(`⚠️ **${defender.nome}** ${ce.runfail}`);
+                    /////////////////////////////////////////
+                    // HEAVY DAMAGE
+                    if (Math.floor(this.danofinal >= (stats.total(defender, "RES")*3))) addDmgTypeEffect(defender, aMove.ELE, this.log, 2);
+                    else if (Math.floor(this.danofinal >= (stats.total(defender, "RES")*2))) addDmgTypeEffect(defender, aMove.ELE, this.log);
+                    /////////////////////////////////////////
+                    // LIMB DAMAGE
+                    if ( Math.floor(this.danofinal >= stats.total(defender, "RES"))) addLimbDmgEffect(defender, bpRD[3], this.log);
                 }
-                //////////////////////////////////
 
-                //////////////////////////////////
-                ////////REFLECT DAMAGE EFFECT///////////////////
-                if (aMove.tipo === 1 && hasStatus(defender, "ACID")) {
-                    if (DEBUG) console.log('REFLECT EFFECT:', defender.STATUS);
-                    const acdmg = getStatusDuration(defender, "ACID");
-                    attacker.PV -= acdmg;
-                    this.log.push(`**${attacker.nome}** ${cf.tk} **${acdmg}** ${cf.acd_dmg}! 🧪`);
+                if (touch) {
+                    //////////////////////////////////
+                    ////Se ultrapassou EQ, perde PR
+                    if (Math.floor(this.dano * [bpRD[2]]) > defender.EQ) {
+                        defender.PR -= 1;
+                        this.log.push(`⚠️ **${defender.nome}** ${ce.bal}`);
+                    }
+                    //////////////////////////////////
+                    ////////REFLECT DAMAGE EFFECT///////////
+                    if (aMove.tipo === 1 && hasStatus(defender, "ACID")) {
+                        if (DEBUG) console.log('REFLECT EFFECT:', defender.STATUS);
+                        const acdmg = getStatusDuration(defender, "ACID");
+                        attacker.PV -= acdmg;
+                        this.log.push(`**${attacker.nome}** ${cf.tk} **${acdmg}** ${cf.acd_dmg}! 🧪`);
+                    }
+                    /////////////////////////////////////////
                 }
-                /////////////////////////////////////////
-              }
+              //}
             }
             ////Apply end round effects///////
             for (const tag of tags) {
@@ -252,6 +258,7 @@ class CombatEngine {
             if (DEBUG) console.log("---");
             if (attacker.PV <= 0 || defender.PV <= 0) break;
             if (hasStatus(defender, "FUGA")) this.log.push(`\n💨 **${defender.nome} ${ce.run}!**`);
+            if (hasStatus(defender, "GUARD")) removeStatus(defender, "GUARD");
         }
         ///Check if the battle is over//////
         const end = this.player.PV <= 0 || this.npc.PV <= 0 || hasStatus(this.player, "FUGA") ;
@@ -493,6 +500,8 @@ class CombatEngine {
         amov -= ( Math.ceil(getStatusDuration(a, "PARALZ")/3) + getStatusDuration(a, "INJ_PD") + getStatusDuration(a, "INJ_PE") )
 
         dmov -= ( Math.ceil(getStatusDuration(d, "PARALZ")/3) + getStatusDuration(d, "INJ_PD") + getStatusDuration(d, "INJ_PE") )
+
+        if (hasStatus(d, "GUARD")) defesa += stats.total(d, "FOR");
 
         if (DEBUG) console.log("acerto:"+acerto+" dano:"+dano+" crit:"+crit+" defesa:"+defesa+" amov:"+amov+" dmov:"+dmov);
         return { acerto , dano , crit, defesa, amov, dmov, gm, rm };

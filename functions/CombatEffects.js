@@ -106,7 +106,12 @@ const CombatTriggers = {
             console.log("Nausea after round:",getStatusDuration(attacker, "NAUSEA"));
             if (!hasStatus(attacker, "NAUSEA")) log.push(`**${attacker.nome}** ${cf.no_nau}`);
             return;
-        }
+        }/*,
+        GUARD: (attacker, defender, log) => {
+            removeStatus(defender, "GUARD");
+            console.log("Removing GUARD status");
+            return;
+        }*/
     },
 
 
@@ -116,29 +121,44 @@ const CombatTriggers = {
             const max = attacker.MPR || 0;
             const rec = Math.floor(max / 2);
             attacker.PR = Math.min(attacker.PR + rec, max);
-            log.push(`**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pr} ✨`);
-            return;
+            //log.push(`**${attacker.nome}** ${cf.reb} ${cf.rest} **${rec}** ${cf.pr} ✨`);
+            return{
+                extexto: `\n**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pr} ✨`
+            };
         },
         REC_PV_MAG: (attacker, defender, log) => {
             const max = attacker.MPV || 0;
             const rec = total(attacker, "ESS") + (attacker.NV * 2);
             attacker.PV = Math.min(attacker.PV + rec, max);
             if (hasStatus(attacker, "BLEED")) reduceStatus(attacker, "BLEED", attacker.NV);
-            log.push(`**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
-            return;
+            //log.push(`**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
+            return{
+                extexto: `**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`
+            };
         },
         REC_PV_NAT: (attacker, defender, log) => {
             const max = attacker.MPV || 0;
             const rec = total(attacker, "RES")* 2;
             attacker.PV = Math.min(attacker.PV + rec, max);
             if (hasStatus(attacker, "BLEED")) reduceStatus(attacker, "BLEED", attacker.NV);
-            log.push(`**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
-            return;
+            //log.push(`**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`);
+            return {
+                extexto: `**${attacker.nome}** ${cf.rest} **${rec}** ${cf.pv} 💖`
+            };
         },
         FUGA: (attacker, defender, log) => {
             addStatus(attacker, "FUGA");
-            log.push(`**${attacker.nome}** ${cf.running}!`);
-            return;
+            //log.push(`**${attacker.nome}** ${cf.running}!`);
+            return {
+                extexto: `\n**${attacker.nome}** ${cf.running}`
+            };
+        },
+        GUARD: (attacker, defender, log) => {
+            addStatus(attacker, "GUARD");
+            //log.push(`**${attacker.nome}** ${cf.guard}!`);
+            return{
+                extexto: `\n**${attacker.nome}** ${cf.guard}!`
+            };
         }
     },
 
