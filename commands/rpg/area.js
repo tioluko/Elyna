@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const { getUserData, updateUserData } = require('../../utils/db.js');
 const { generateMiniMapImage } = require('../../utils/ImageGen.js');
-const { getLocalGrid, getTile } = require('../../functions/MapReader.js');
+const { getTile } = require('../../functions/MapReader.js');
 const { barCreate } = require('../../functions/stats.js');
 const { info, map } = require("../../data/locale.js");
 const mapa = require('../../data/map.json');
@@ -11,8 +11,8 @@ module.exports = {
     cooldown: 5,
     data: new SlashCommandBuilder()
     .setName('area')
-    .setDescription('Exibe informação da area local e arredores'),
-
+    .setDescription('View information about current and surrounding areas')
+    .setDescriptionLocalizations({ "pt-BR": "Exibe informação da area local e arredores", }),
     async execute(interaction){
         const user = getUserData(interaction.user.id);
 

@@ -296,12 +296,13 @@ class CombatEngine {
                 exp = this.npc.NV || 1;
                 const lvlup = stats.addxp(this.player, exp);
 
+                this.updateHuntQuest(this.player.id, this.npc.id);
+
                 const loot = processLootFromNPC(this.npc); // <- captura resultado
                 console.log("drops filtrados:"+JSON.stringify(loot));
                 await insertToInventory(this.player.id, loot); // Insere
                 const lootText = this.formatLootSummary(loot);   // Escreve o log
 
-                // loot = generateLoot(npc); // <- Loot futura aqui?
                 this.log.push(`\n🏆 ${ce.vic}! **${this.player.nome}** ${ce.got} **${exp} XP**!`);
                 if (lvlup) this.log.push(`\n${info.lvlup}`);
                 if (loot.length > 0) this.log.push(`\n📦 ${lootText} ${ce.on} ${this.npc.nome}`);
@@ -619,6 +620,30 @@ class CombatEngine {
         return Object.entries(grouped)
         .map(([name, qty]) => `+${qty} **${name}**`)
         .join(', ');
+    }
+
+    updateHuntQuest(userId, defeatedNpcId) {
+        const quest = db.prepare(`
+        SELECT id, alvo FROM user_quests
+        WHERE user_id = ? AND estado = 0 AND tipo = 'hunt'
+        LIMIT 1
+        `).get(userId);
+
+        if (!quest) return;
+
+        try {
+            let alvo = JSON.parse(quest.alvo);
+            const [npcId, required, current] = alvo;
+
+            if (npcId === defeatedNpcId) {
+                alvo[2] = (current || 0) + 1;
+
+                db.prepare(`UPDATE user_quests SET alvo = ? WHERE id = ?`)
+                .run(JSON.stringify(alvo), quest.id);
+            }
+        } catch (err) {
+            console.error('Erro ao atualizar progresso da quest hunt:', err);
+        }
     }
 
     // Salva estado de volta no banco após execução

@@ -132,9 +132,17 @@ function getRandomItemFromDB({ itemType, comp, slot, itemIdWhitelist = [] }) {
 
     const params = [itemType, comp];
 
+    //if (slot && slot !== 'none') {
+    //    query += ` AND slot = ?`;
+    //    params.push(slot);
+    //}
     if (slot && slot !== 'none') {
-        query += ` AND slot = ?`;
-        params.push(slot);
+        if (slot === 'hand') {
+            query += ` AND (slot = 'hand' OR slot = '2hand')`;
+        } else {
+            query += ` AND slot = ?`;
+            params.push(slot);
+        }
     }
 
     if (itemIdWhitelist.length > 0) {
