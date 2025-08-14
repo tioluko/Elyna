@@ -55,6 +55,7 @@ const map ={
     youneed: `You need`,
     onlyhave: `to cross this terrain, you only have`,
     onlyhaveb: `to explore this terrain, you only have`,
+    onlyhavec: `to look for work here, you only have`,
     tipo0: `Deep sea`,
     tipo1: `Sea`,
     tipo2: `Beach`,

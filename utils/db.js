@@ -219,6 +219,14 @@ function updateCombat(id, updates) {
     //const validUpdates = Object.fromEntries(Object.entries(updates).filter(([key]) => allowed.includes(key)));
 }
 
+const itemsCache = Object.fromEntries(
+    db.prepare("SELECT id, nome FROM items").all().map(row => [row.id, row.nome])
+);
+
+const npcsCache = Object.fromEntries(
+    db.prepare("SELECT id, nome FROM npcs").all().map(row => [row.id, row.nome])
+);
+
 module.exports = {
     db,
     userExists,
@@ -237,5 +245,7 @@ module.exports = {
     updateCombat,
     initUserMoves,
     initUserPerks,
-    initUserInventory
+    initUserInventory,
+    itemsCache,
+    npcsCache
 };

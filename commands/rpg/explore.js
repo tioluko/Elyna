@@ -28,11 +28,8 @@ module.exports = {
 
         //stats.fullheal(user); //temporario
 
-        if (user.PE < tile.rank) {
-            return interaction.reply(`:star: ${map.youneed} ${tile.rank} ${map.sp} ${map.onlyhaveb} ${user.PE} :star:`);
-        }
-
         // Pagar o custo
+        if (user.PE < tile.rank) return interaction.reply(`:star: ${map.youneed} ${tile.rank} ${map.sp} ${map.onlyhaveb} ${user.PE} :star:`);
         updateUserData(user.id, {PE: user.PE - tile.rank});
 
 

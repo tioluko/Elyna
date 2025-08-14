@@ -1,8 +1,8 @@
 const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discord.js');
-const { getUserData, db } = require('../../utils/db.js');
+const { getUserData, updateUserData, itemsCache, npcsCache, db } = require('../../utils/db.js');
 const { getTile } = require('../../functions/MapReader.js');
 const { barCreate, addxp } = require('../../functions/stats.js');
-const { info, cft } = require("../../data/locale.js");
+const { info, cft, map } = require("../../data/locale.js");
 const block = require('../../utils/block.js');
 
 module.exports = {
@@ -23,7 +23,7 @@ module.exports = {
     )),
     async execute(interaction) {
         try {
-            const user = getUserData(interaction.user.id);
+            let user = getUserData(interaction.user.id);
             const option = interaction.options.getString('options');
 
             const blocks = block.noChar(user) || block.onEvent(user) || block.Resting(user);
@@ -94,9 +94,11 @@ module.exports = {
                     }
                 }
 
-                const desc = describe(activeQuest, alvo, true);
+                const desc = describe(activeQuest, alvo);
                 let lvlup = false;
                 lvlup = addxp(user, userPos.rank);
+
+                console.log(`finished ${activeQuest.tipo} quest`); // log
 
                 const embed = new EmbedBuilder()
                 .setTitle(`:star: Você completou sua missão :star:`)
@@ -118,6 +120,8 @@ module.exports = {
                 WHERE id = ?
                 `).run(activeQuest.id);
 
+                console.log(`abandoned ${activeQuest.tipo} quest`); // log
+
                 // Placeholder para teste
                 return interaction.reply({ content: '📜❌ Você abandonou sua missão', ephemeral: true });
             }
@@ -126,20 +130,26 @@ module.exports = {
                 let alvo;
                 try { alvo = JSON.parse(activeQuest.alvo); } catch { alvo = []; }
 
-                const desc = describe(activeQuest, alvo);
-
+                desc = describe(activeQuest, alvo, true);
                 const embed = new EmbedBuilder()
                 .setTitle('📜 Current Quest')
                 .setDescription(desc)
                 .setColor(0xffd700)
                 .setFooter({text: interaction.user.username,iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,});
-
-                return interaction.reply({ embeds: [embed]});
+                return interaction.reply({ embeds: [embed]}).then(() =>
+                setTimeout(
+                    () => interaction.deleteReply(),
+                           10_000 // not sure if you wanted 2000 (2s) or 20000 (20s)
+                ))
             }
 
             if (userPos.ocup < 1) {
                 return interaction.reply({ content: 'Você não está em uma area populosa os suficiente para encontrar missões.', ephemeral: true });
             }
+
+            // Pagar o custo
+            if (user.PE < userPos.rank) return interaction.reply(`:star: ${map.youneed} ${userPos.rank+1} ${map.sp} ${map.onlyhavec} ${user.PE} :star:`);
+            updateUserData(user.id, {PE: user.PE - (userPos.rank+1)});
 
             // Placeholder: cria uma quest fixa
             const tipo = Math.random() < 0.5 ? 'deliver' : 'hunt';
@@ -173,7 +183,29 @@ module.exports = {
             VALUES (?, ?, ?, ?, 0, ?)
             `).run(user.id, tipo, alvo, recompensa, inicio);
 
-            return interaction.reply({ content: `Nova quest adquirida! Tipo: **${tipo}**` });
+            user = getUserData(interaction.user.id);
+
+            const Quest = db.prepare(`
+            SELECT * FROM user_quests
+            WHERE user_id = ? AND estado = 0
+            LIMIT 1
+            `).get(user.id);
+            desc = describe(Quest, JSON.parse(alvo));
+
+            console.log(`new ${tipo} quest`); // log
+
+            const embed = new EmbedBuilder()
+            .setTitle(`:star: New Quest Acquired! :star:`)
+            .setDescription(desc + `\n\n${barCreate(user,"PE")}`)
+            .setColor(0xffd700)
+            .setFooter({text: interaction.user.username,iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,});
+            return interaction.reply({ embeds: [embed]}).then(() =>
+            setTimeout(
+                () => interaction.deleteReply(),
+                       10_000 // not sure if you wanted 2000 (2s) or 20000 (20s)
+            ))
+            //return interaction.reply({ content: `Nova quest adquirida! Tipo: **${tipo}**\n${barCreate(user,"PE")} **${map.sp}: **${user.PE} / ${user.MPE}` });
+
         } catch (err) {
             console.error(err);
             return interaction.reply({ content: 'Ocorreu um erro ao tentar gerar a quest.', ephemeral: true });
@@ -181,7 +213,7 @@ module.exports = {
     }
 };
 
-function describe (activeQuest, alvo, noprog=false){
+function describe(activeQuest, alvo, prog=false){
 
     // Pega area da missão
     const inicioData = JSON.parse(activeQuest.inicio);
@@ -193,31 +225,34 @@ function describe (activeQuest, alvo, noprog=false){
 
     // Monta string da recompensa
     const rewardStr = recompensa.map(([itemId, qty]) => {
-        const itemNameRow = db.prepare(`SELECT nome FROM items WHERE id = ?`).get(itemId);
-        const itemName = itemNameRow ? itemNameRow.nome : `Item ${itemId}`;
+        //const itemNameRow = db.prepare(`SELECT nome FROM items WHERE id = ?`).get(itemId);
+        //const itemName = itemNameRow ? itemNameRow.nome : `Item ${itemId}`;
+        const itemName = itemsCache[itemId] || `Item ${itemId}`;
         return `${qty}x ${itemName}`;
     }).join(', ');
 
     if (activeQuest.tipo === 'deliver') {
         const [itemId, required] = alvo;
-        const itemNameRow = db.prepare(`SELECT nome FROM items WHERE id = ?`).get(itemId);
-        const itemName = itemNameRow ? itemNameRow.nome : `Item ${itemId}`;
+        //const itemNameRow = db.prepare(`SELECT nome FROM items WHERE id = ?`).get(itemId);
+        //const itemName = itemNameRow ? itemNameRow.nome : `Item ${itemId}`;
+        const itemName = itemsCache[itemId] || `Item ${itemId}`;
         const inv = db.prepare(`
         SELECT quantidade FROM user_inventory
         WHERE user_id = ? AND item_id = ? AND equipado = 0
         `).get(activeQuest.user_id, itemId);
         const haveQty = inv ? inv.quantidade : 0;
 
-        if (noprog) return(`**Objective:** Deliver ${required}x ${itemName} at **${x},${y}**\n\n**Reward:** ${rewardStr}`);
-        return(`**Objective:** Deliver ${required}x ${itemName} at **${x},${y}** \n**Progress:** ${haveQty}/**${required}**\n\n**Reward:** ${rewardStr}`);
+        if (prog) return(`**Objective:** Deliver ${required}x ${itemName} at **${x},${y}** \n**Progress:** ${haveQty}/**${required}**\n\n**Reward:** ${rewardStr}`);
+        return(`**Objective:** Deliver ${required}x ${itemName} at **${x},${y}**\n\n**Reward:** ${rewardStr}`);
     }
     if (activeQuest.tipo === 'hunt') {
         const [npcId, required, current] = alvo;
-        const npcNameRow = db.prepare(`SELECT nome FROM npcs WHERE id = ?`).get(npcId);
-        const npcName = npcNameRow ? npcNameRow.nome : `NPC ${npcId}`;
+        //const npcNameRow = db.prepare(`SELECT nome FROM npcs WHERE id = ?`).get(npcId);
+        //const npcName = npcNameRow ? npcNameRow.nome : `NPC ${npcId}`;
+        const npcName = npcsCache[npcId] || `NPC ${npcId}`;
 
-        if (noprog) return(`**Objective:** Eliminate ${required}x ${npcName} and report at **${x},${y}**\n\n**Reward:** ${rewardStr}`);
-        return(`**Objective:** Eliminate ${required}x ${npcName} and report at **${x},${y}**\n**Progress:** ${current}/**${required}**\n\n**Reward:** ${rewardStr}`);
+        if (prog) return(`**Objective:** Eliminate ${required}x ${npcName} and report at **${x},${y}**\n**Progress:** ${current}/**${required}**\n\n**Reward:** ${rewardStr}`);
+        return(`**Objective:** Eliminate ${required}x ${npcName} and report at **${x},${y}**\n\n**Reward:** ${rewardStr}`);
     }
 }
 
