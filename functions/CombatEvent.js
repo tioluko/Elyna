@@ -62,4 +62,33 @@ function createCombat(userId, npcId) {
 
     return result.lastInsertRowid;
 }
-module.exports = { createCombat };
+
+function getRandomNpc(tile, specific = 0.5){
+    const r = Math.random() < specific ? true : false;
+    if (r){
+        const stmt = db.prepare(`
+        SELECT * FROM npcs
+        WHERE tipo IN (?, -1)
+        AND cont <= ?
+        AND ocup <= ?
+        AND NV = ?
+        ORDER BY RANDOM()
+        LIMIT 1;
+        `);
+        return stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1);
+
+    }else {
+        const stmt = db.prepare(`
+        SELECT * FROM npcs
+        WHERE tipo IN (?, -1)
+        AND cont <= ?
+        AND ocup <= ?
+        AND NV BETWEEN (? - 1) AND (? + 1)
+        ORDER BY RANDOM()
+        LIMIT 1;
+        `);
+        return stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1, tile.rank ?? 1);
+    }
+}
+
+module.exports = { createCombat, getRandomNpc };

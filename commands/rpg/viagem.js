@@ -3,7 +3,7 @@ const { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } = require('discor
 const { getUserData, updateUserData, db } = require('../../utils/db.js');
 const { generateMiniMapImage } = require('../../utils/ImageGen.js');
 const { getTile } = require('../../functions/MapReader.js');
-const { createCombat } = require('../../functions/CombatEvent.js');
+const { createCombat, getRandomNpc } = require('../../functions/CombatEvent.js');
 const { info, map } = require('../../data/locale.js');
 const { barCreate } = require('../../functions/stats.js');
 const mapa = require('../../data/map.json');
@@ -95,20 +95,8 @@ module.exports = {
         let encounter = rollPercent(10+(tile.cont*5)+(tile.rank));
         let npc = null;
         if (encounter){
-            // 🔍 Busca NPCs compatíveis no mapa
+            // Busca NPCs compatíveis no mapa
             /*const stmt = db.prepare(`
-            SELECT n.* FROM npc_encounters e
-            JOIN npcs n ON n.id = e.npc_id
-            WHERE (e.tipo = ? OR e.tipo = -1)
-            AND e.cont <= ?
-            AND e.ocup <= ?
-            AND ABS(n.NV - ?) <= 1
-            ORDER BY RANDOM()
-            LIMIT 1
-            `);
-            npc = stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1);*/
-
-            const stmt = db.prepare(`
             SELECT * FROM npcs
             WHERE tipo IN (?, -1)
             AND cont <= ?
@@ -117,7 +105,8 @@ module.exports = {
             ORDER BY RANDOM()
             LIMIT 1;
             `);
-            npc = stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1, tile.rank ?? 1);
+            npc = stmt.get(tile.tipo, tile.cont ?? 0, tile.ocup ?? 0, tile.rank ?? 1, tile.rank ?? 1);*/
+            npc = getRandomNpc(tile, (user.XP === 0) ? 1 : 0.5);
 
             if (!npc) {
                 encounter = false;
