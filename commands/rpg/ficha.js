@@ -69,7 +69,7 @@ module.exports = {
       acc: "🔸 ",
     };
     const perkorder = ["racial", "natural", "sobrenatural"];
-    const equipSlots = ["head","torso","arms","legs","rhand","lhand","hands","acc"];
+    const equipSlots = ["head","torso","arms","legs","rhand","lhand","hands","acc1","acc2","acc3","acc4","acc5"];
     const equipped = {};
     const backpack = [];
 
@@ -87,7 +87,7 @@ module.exports = {
     for (const item of inv) {
       const slot = item.slot_override || item.slot;
       if (item.equipado && equipSlots.includes(slot)) {
-        if (slot === "acc") {
+        if (slot.startsWith("acc")) {
           if (!equipped.acc) equipped.acc = [];
           equipped.acc.push(item);
         } else {
@@ -97,7 +97,7 @@ module.exports = {
         backpack.push(item);
       }
     }
-    const equipList = equipSlots
+    const equipSection = equipSlots
       .filter((slot, _, arr) => {
         // Se houver um item de duas mãos, pule rhand e lhand
         if (equipped.hands) {
@@ -107,23 +107,12 @@ module.exports = {
         // Se NÃO houver item 2hand, não mostre slot "hands"
         if (!equipped.hands && slot === 'hands') return false;
 
+        // não trata acc aqui, monta separado
+        if (slot.startsWith("acc")) return false;
+
         return true;
       })
       .map((slot) => {
-        if (slot === "acc") {
-          const accs = equipped.acc || [];
-          if (accs.length === 0)
-            return `${icons.acc} **${ficha.acc}**: *${ficha.empty}*`;
-          return (
-            `💍 **${ficha.acc}**:\n` +
-            accs
-              .map((a) => {
-                const modsText = describeMods(safeJsonParse(a.mods));
-                return `${icons.acc} <**${a.nome}**> ${modsText ? `\n-# ${modsText}` : `\n-# ${ficha.nomods}`}`;
-              })
-              .join("\n")
-          );
-        }
         const item = equipped[slot];
         if (!item) return `${icons[slot]} *${ficha.empty}*`;
 
@@ -131,6 +120,23 @@ module.exports = {
         return `${icons[slot]} <**${item.nome}**> ${modsText ? `\n-# ${modsText}` : `\n-# ${ficha.nomods}`}`;
       })
       .join("\n");
+
+      const accs = equipped.acc || [];
+      let accSection = `💍 **${ficha.acc}**:\n`;
+
+      for (let i = 0; i < 5; i++) {
+        const acc = accs[i];
+        if (acc) {
+          const modsText = describeMods(safeJsonParse(acc.mods));
+          accSection += `🔸 <**${acc.nome}**> ${
+            modsText ? `\n-# ${modsText}` : `\n-# ${ficha.nomods}`
+          }\n`;
+        } else {
+          accSection += `🔸 *${ficha.empty}*\n`;
+        }
+      }
+
+      const equipList = equipSection + "\n" + accSection.trim();
 
       const itemList = backpack.map((i) => `• **${i.nome}** x${i.quantidade}`)
       .join("\n");

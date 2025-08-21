@@ -5,7 +5,7 @@ const { modApply, calculateStats } = require('./stats.js');
 
 function equip(userId, invId) {
     const inv = db.prepare(`
-    SELECT ui.*, i.slot, i.move_id, i.mods
+    SELECT ui.*, i.slot, i.move_id, i.mods, i.tags
     FROM user_inventory ui
     JOIN items i ON i.id = ui.item_id
     WHERE ui.id = ? AND ui.user_id = ?
@@ -13,6 +13,28 @@ function equip(userId, invId) {
     if (!inv) throw new Error("Item inexistente ou inválido");
 
     let slot = inv.slot;
+
+    // Se for acessório
+    if (slot === 'acc') {
+        const accs = db.prepare(`
+        SELECT slot_override FROM user_inventory
+        WHERE user_id = ? AND equipado = 1 AND slot_override LIKE 'acc%'
+        `).all(userId);
+        const used = accs.map(a => a.slot_override);
+
+        // procura slot livre
+        let freeAcc = null;
+        for (let i = 1; i <= 5; i++) {
+            if (!used.includes(`acc${i}`)) {
+                freeAcc = `acc${i}`;
+                break;
+            }
+        }
+        if (!freeAcc) {
+            throw new Error('Todos os slots de acessórios já estão ocupados (máx 5).');
+        }
+        slot = freeAcc;
+    }
 
     // Se for item de mão
     if (slot === 'hand') {
@@ -113,10 +135,15 @@ function equip(userId, invId) {
                 moveMods[key.slice(4)] = mods[key];
             }
         }
+        let mun = null;
+        const tags = JSON.parse(inv.tags || '[]');
+        if (Array.isArray(tags) && tags.length > 0) {
+            mun = tags[0]; // nº de usos definido no item
+        }
         db.prepare(`
-        INSERT INTO user_moves (user_id, move_id, origem, mods)
-        VALUES (?, ?, ?, ?)
-        `).run(userId, inv.move_id, `equip:${realInvId}`, JSON.stringify(moveMods));
+        INSERT INTO user_moves (user_id, move_id, origem, mods, mun)
+        VALUES (?, ?, ?, ?, ?)
+        `).run(userId, inv.move_id, `equip:${realInvId}`, JSON.stringify(moveMods),mun);
     }
 
     // Atualiza stats

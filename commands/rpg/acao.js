@@ -1,6 +1,6 @@
 const { DEBUG } = require('../../config.js');
 const { SlashCommandBuilder } = require('discord.js');
-const { getUserData, getUserMoves, getCombatState, updateCombat, updateCombatUserData } = require('../../utils/db');
+const { getUserData, getUserMoves, getCombatState, updateCombat, updateCombatUserData, useItemMove } = require('../../utils/db');
 const { processCombatAction } = require('../../functions/CombatEvent');
 const CombatEngine = require('../../functions/CombatEngine');
 const { processNarrativeAction } = require('../../functions/NarrativeEvent');
@@ -143,6 +143,11 @@ module.exports = {
                 if (pr)status.push(["PR_BOOST", 1]);
                 player.STATUS = JSON.stringify(status);
             }
+
+            //Tenta usar o item caso o move venha de um item consumível
+            if (DEBUG) console.log("item consumível? ",selected.mun);
+            useItemMove(user.id, moveId)
+            if (DEBUG) console.log("after use ",selected.mun);
 
             await interaction.deferReply();
 

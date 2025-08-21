@@ -260,6 +260,23 @@ const CombatTriggers = {
                 return;
             }
         },
+        NET1: (acerto, defender, log) => {
+            const dt = acerto;
+            const stat = total(defender, "FOR");
+            const roll = r2d10();
+            const result = roll.total + stat;
+            log.push(`🎲 ${cf.strroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
+
+            if (result >= dt) {
+                log.push(`**${defender.nome}** ${cf.imb_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "HOLD") ? `${cf.add_imb}` : `${cf.is_imb}`));
+                addStatus(defender, "HOLD", ( hasStatus(defender, "HOLD") ? 4 : 10));
+                //addStatus(defender, "HOLD", (1+dt-result));
+                return;
+            }
+        },
         POISON: (attacker, defender, log) => {
             const dt = 15;
             const stat = total(defender, "RES")

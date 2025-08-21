@@ -167,6 +167,53 @@ function getMoveById(moveId) {
     return db.prepare(`SELECT * FROM moves WHERE id = ?`).get(moveId);
 }
 
+function useItemMove(userId, moveId) {
+    const move = db.prepare(`
+    SELECT * FROM user_moves
+    WHERE user_id = ? AND move_id = ?
+    `).get(userId, moveId);
+
+    if (!move) throw new Error("Move não encontrado.");
+
+    // Move infinito
+    if (move.mun === null) return;
+
+    // Subtrai 1 uso
+    const newMun = move.mun - 1;
+
+    if (newMun > 0) {
+        db.prepare(`
+        UPDATE user_moves SET mun = ? WHERE id = ?
+        `).run(newMun, move.id);
+    } else {
+        // Usos acabaram → remover move
+        db.prepare(`DELETE FROM user_moves WHERE id = ?`).run(move.id);
+
+        // Checa comportamento do item
+        const origem = move.origem;
+        if (origem?.startsWith("equip:")) {
+            const invId = parseInt(origem.split(":")[1]);
+            const inv = db.prepare(`
+            SELECT i.tags FROM user_inventory ui
+            JOIN items i ON i.id = ui.item_id
+            WHERE ui.id = ?
+            `).get(invId);
+
+            const tags = JSON.parse(inv?.tags || '[]');
+            const removeItem = tags[1] ?? false;
+
+            if (removeItem) {
+                db.prepare(`DELETE FROM user_inventory WHERE id = ?`).run(invId);
+            } else {
+                db.prepare(`
+                UPDATE user_inventory SET equipado = 0, slot_override = NULL
+                WHERE id = ?
+                `).run(invId);
+            }
+        }
+    }
+}
+
 function getUserCombatState(userId) {
     const user = getUserData(userId);
     const applied = modApplyInMemory(user); // <- sem salvar no banco
@@ -246,6 +293,7 @@ module.exports = {
     initUserMoves,
     initUserPerks,
     initUserInventory,
+    useItemMove,
     itemsCache,
     npcsCache
 };
