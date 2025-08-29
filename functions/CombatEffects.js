@@ -284,7 +284,7 @@ const CombatTriggers = {
             const result = roll.total + stat;
             log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
 
-            if (result >= dt) {
+            if (result >= dt || !canEffect(defender, "POISON")) {
                 log.push(`**${defender.nome}** ${cf.psn_res}`);
                 return;
             }else {
@@ -301,7 +301,7 @@ const CombatTriggers = {
             const result = roll.total + stat;
             log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DTs:**${dt},${dt2}**`);
 
-            if (result >= dt) {
+            if (result >= dt || !canEffect(defender, "POISON")) {
                 log.push(`**${defender.nome}** ${cf.psn_res}`);
                 return;
             }else if (result >= dt2){
@@ -320,7 +320,7 @@ const CombatTriggers = {
             const dt = acerto;
             const result = total(defender, "GM")
 
-            if (result >= dt) {
+            if (result >= dt || !canEffect(defender, "POISON")) {
                 log.push(`**${defender.nome}** ${cf.psn_res}`);
                 return;
             }else {
@@ -336,7 +336,7 @@ const CombatTriggers = {
             const result = roll.total + stat;
             log.push(`🎲 ${cf.resroll}: ** ${result} ** \u2003 *2d10* {[${roll.d1}, ${roll.d2}] + ${stat}} DT:**${dt}**`);
 
-            if (result >= dt) {
+            if (result >= dt || !canEffect(defender, "NAUSEA")) {
                 log.push(`**${defender.nome}** ${cf.nau_res}`);
                 return;
             }else {
@@ -349,12 +349,34 @@ const CombatTriggers = {
             const dt = acerto;
             const result = total(defender, "GM")
 
-            if (result >= dt) {
+            if (result >= dt || !canEffect(defender, "NAUSEA")) {
                 log.push(`**${defender.nome}** ${cf.nau_res}`);
                 return;
             }else {
                 log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "NAUSEA") ? `${cf.add_nau}` : `${cf.is_nau}`));
                 addStatus(defender, "NAUSEA", (1+dt-result));
+                return;
+            }
+        },
+        BURN: (attacker, defender, log) => {
+
+            if (result >= dt || !canEffect(defender, "BURN")) {
+                log.push(`**${defender.nome}** ${cf.brn_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "BURN") ? `${cf.add_brn}` : `${cf.is_brn}`));
+                addStatus(defender, "BURN", (5));
+                return;
+            }
+        },
+        BURN2: (attacker, defender, log) => {
+
+            if (result >= dt || !canEffect(defender, "BURN")) {
+                log.push(`**${defender.nome}** ${cf.brn_res}`);
+                return;
+            }else {
+                log.push (`⚠️ **${defender.nome}** `+ (hasStatus(defender, "BURN") ? `${cf.add_brn}` : `${cf.is_brn}`));
+                addStatus(defender, "BURN", (15));
                 return;
             }
         },
@@ -412,29 +434,33 @@ function removeStatus(entity, tag) {
 function addDmgTypeEffect (entity, ele, log, pow = 1 ){
     switch (ele) {
         case "ct": {
-            if (!hasStatus(entity, "UNDEAD")) {
+            if (canEffect(entity, "STUN")) {
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "STUN") ? `${cf.add_stn}` : `${cf.is_stn}`));
                 addStatus(entity, "STUN", (3*pow));
             }return;
         }case "cr": {
-            if (!hasStatus(entity, "UNDEAD")&&!hasStatus(entity, "PLANT")) {
+            if (canEffect(entity, "BLEED")) {
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
                 addStatus(entity, "BLEED", (5*pow));
             }return;
         }case "pn": {
-            if (!hasStatus(entity, "UNDEAD")&&!hasStatus(entity, "PLANT")) {
+            if (canEffect(entity, "BLEED")) {
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BLEED") ? `${cf.add_bld}` : `${cf.is_bld}`));
                 addStatus(entity, "BLEED", (5*pow));
             }return;
         }case "ch": {
-            if (!hasStatus(entity, "UNDEAD")) {
+            if (canEffect(entity, "PARALZ")) {
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
                 addStatus(entity, "PARALZ", (5*pow));
             }return;
         }case "cg": {
-            if (!hasStatus(entity, "UNDEAD")) {
+            if (canEffect(entity, "PARALZ")) {
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "PARALZ") ? `${cf.add_plz}` : `${cf.is_plz}`));
                 addStatus(entity, "PARALZ", (5*pow));
+            }
+            if (hasStatus(entity, "BURN")) {
+                reduceStatus(entity, "BURN", (5*pow));
+                if (!hasStatus(entity, "BURN")) log.push(`**${entity.nome}** ${cf.no_brn}`);
             }return;
         }case "qm": {
             log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BURN") ? `${cf.add_brn}` : `${cf.is_brn}`));
@@ -442,12 +468,34 @@ function addDmgTypeEffect (entity, ele, log, pow = 1 ){
             addStatus(entity, "BURN", (5*pow));
             return;
         }case "vt": {
-            if (!hasStatus(entity, "UNDEAD")) {
+            if (canEffect(entity, "NAUSEA")) {
                 log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "NAUSEA") ? `${cf.add_nau}` : `${cf.is_nau}`));
                 addStatus(entity, "NAUSEA", (5*pow));
             }return;
         }case "ep": return;
     }
+}
+
+function canEffect (entity, effect ){
+    if (hasStatus(entity, "UNDEAD")) {
+        switch (effect) {
+            case "STUN":
+            case "BLEED":
+            case "POISON":
+            case "PARALZ":
+            case "NAUSEA": {
+                return false;
+            }
+        }
+    }
+    if (hasStatus(entity, "PLANT")) {
+        switch (effect) {
+            case "BLEED": {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 function addLimbDmgEffect (entity, limb, log, pow = 1 ){
@@ -509,4 +557,4 @@ function r2d10() {
         return { d1, d2, total };
 }
 
-module.exports = { CombatTriggers, hasStatus, addStatus, removeStatus, reduceStatus, getStatusDuration, addDmgTypeEffect, addLimbDmgEffect };
+module.exports = { CombatTriggers, hasStatus, addStatus, removeStatus, reduceStatus, getStatusDuration, addDmgTypeEffect, addLimbDmgEffect, canEffect };
