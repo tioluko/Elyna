@@ -1,4 +1,4 @@
-const { db } = require('../utils/db.js'); // ajuste o caminho conforme seu projeto
+const { db } = require('../utils/db.js');
 const { safeJsonParse } = require('../functions/JsonDesc.js');
 
 function generateLoot({

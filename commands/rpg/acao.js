@@ -169,9 +169,16 @@ module.exports = {
             if (lastMsgId) {
                 try {
                     const msg = await interaction.channel.messages.fetch(lastMsgId);
+
                     if (msg) {
-                        await msg.edit(result); // result = { embeds, files }
-                        updated = true;
+                        // Busca a última mensagem do canal
+                        const lastChannelMsg = (await interaction.channel.messages.fetch({ limit: 2 })).last();
+
+                        // Só atualiza se for realmente a última
+                        if (lastChannelMsg && lastChannelMsg.id === msg.id) {
+                            await msg.edit(result);
+                            updated = true;
+                        }
                     }
                 } catch (err) {
                     console.warn(`Falha ao editar mensagem antiga: ${err.message}`);
@@ -194,6 +201,8 @@ module.exports = {
                     }
                 }
             }
+
+
 
             ///////////////////////////////////////
 

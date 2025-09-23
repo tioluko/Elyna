@@ -387,49 +387,7 @@ const CombatTriggers = {
     }
 };
 
-function hasStatus(entity, tag) {
-    const status = JSON.parse(entity.STATUS || '[]');
-    return status.some(([t]) => t === tag);
-}
-
-function getStatusDuration(entity, tag) {
-    const status = JSON.parse(entity.STATUS || '[]');
-    const entry = status.find(([t]) => t === tag);
-    return entry ? entry[1] : 0;
-}
-
-function addStatus(entity, tag, duration = 1) {
-    const status = JSON.parse(entity.STATUS || '[]');
-    const existing = status.find(([t]) => t === tag);
-    if (existing) {
-        existing[1] += duration; // prolonga
-    } else {
-        status.push([tag, duration]);
-    }
-    entity.STATUS = JSON.stringify(status);
-}
-
-function reduceStatus(entity, tag, amount = 1) {
-    const status = JSON.parse(entity.STATUS || '[]');
-    const index = status.findIndex(([t]) => t === tag);
-    if (index !== -1) {
-        status[index][1] -= amount;
-        if (status[index][1] <= 0) status.splice(index, 1); // remove
-        entity.STATUS = JSON.stringify(status);
-        return true;
-    }
-    return false;
-}
-
-function removeStatus(entity, tag) {
-    const status = JSON.parse(entity.STATUS || '[]');
-    const filtered = status.filter(s => {
-        if (typeof s === 'string') return s !== tag;
-        if (Array.isArray(s)) return s[0] !== tag;
-        return true;
-    });
-    entity.STATUS = JSON.stringify(filtered);
-}
+/////////////////
 
 function addDmgTypeEffect (entity, ele, log, pow = 1 ){
     switch (ele) {
@@ -479,6 +437,16 @@ function addDmgTypeEffect (entity, ele, log, pow = 1 ){
 function canEffect (entity, effect ){
     if (hasStatus(entity, "UNDEAD")) {
         switch (effect) {
+            case "BLEED":
+            case "POISON":
+            case "PARALZ":
+            case "NAUSEA": {
+                return false;
+            }
+        }
+    }
+    if (hasStatus(entity, "CONSTRUCT")) {
+        switch (effect) {
             case "STUN":
             case "BLEED":
             case "POISON":
@@ -490,7 +458,8 @@ function canEffect (entity, effect ){
     }
     if (hasStatus(entity, "PLANT")) {
         switch (effect) {
-            case "BLEED": {
+            case "BLEED":
+            case "NAUSEA": {
                 return false;
             }
         }
@@ -532,22 +501,62 @@ function addLimbDmgEffect (entity, limb, log, pow = 1 ){
     }
 }
 
-/*function hasStatus(entity, tag) {
- *    const status = JSON.parse(entity.STATUS || '[]');
- *    return status.includes(tag);
- * }
- *
- * function addStatus(entity, tag) {
- *    const status = new Set(JSON.parse(entity.STATUS || '[]'));
- *    status.add(tag);
- *    entity.STATUS = JSON.stringify([...status]);
- * }
- *
- * function removeStatus(entity, tag) {
- *    const status = new Set(JSON.parse(entity.STATUS || '[]'));
- *    status.delete(tag);
- *    entity.STATUS = JSON.stringify([...status]);
- * }*/
+///////////////////////////////////////
+
+function hasTag(entity, tag) {
+    const tags = JSON.parse(entity.TAGS || '[]');
+    return tags.some(([t]) => t === tag);
+}
+
+function getTagValue(entity, tag) {
+    const tags = JSON.parse(entity.TAGS || '[]');
+    const entry = tags.find(([t]) => t === tag);
+    return entry ? entry[1] : 0;
+}
+
+function hasStatus(entity, tag) {
+    const status = JSON.parse(entity.STATUS || '[]');
+    return status.some(([t]) => t === tag);
+}
+
+function getStatusDuration(entity, tag) {
+    const status = JSON.parse(entity.STATUS || '[]');
+    const entry = status.find(([t]) => t === tag);
+    return entry ? entry[1] : 0;
+}
+
+function addStatus(entity, tag, duration = 1) {
+    const status = JSON.parse(entity.STATUS || '[]');
+    const existing = status.find(([t]) => t === tag);
+    if (existing) {
+        existing[1] += duration; // prolonga
+    } else {
+        status.push([tag, duration]);
+    }
+    entity.STATUS = JSON.stringify(status);
+}
+
+function reduceStatus(entity, tag, amount = 1) {
+    const status = JSON.parse(entity.STATUS || '[]');
+    const index = status.findIndex(([t]) => t === tag);
+    if (index !== -1) {
+        status[index][1] -= amount;
+        if (status[index][1] <= 0) status.splice(index, 1); // remove
+        entity.STATUS = JSON.stringify(status);
+        return true;
+    }
+    return false;
+}
+
+function removeStatus(entity, tag) {
+    const status = JSON.parse(entity.STATUS || '[]');
+    const filtered = status.filter(s => {
+        if (typeof s === 'string') return s !== tag;
+        if (Array.isArray(s)) return s[0] !== tag;
+        return true;
+    });
+    entity.STATUS = JSON.stringify(filtered);
+}
 
 function r2d10() {
     let d1 = Math.floor(Math.random() * 10) + 1;
@@ -557,4 +566,4 @@ function r2d10() {
         return { d1, d2, total };
 }
 
-module.exports = { CombatTriggers, hasStatus, addStatus, removeStatus, reduceStatus, getStatusDuration, addDmgTypeEffect, addLimbDmgEffect, canEffect };
+module.exports = { CombatTriggers, hasTag, getTagValue, hasStatus, addStatus, removeStatus, reduceStatus, getStatusDuration, addDmgTypeEffect, addLimbDmgEffect, canEffect };

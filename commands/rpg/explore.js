@@ -64,12 +64,13 @@ module.exports = {
                 .setDescription(`**${npc.nome}** ${map.encounter}`)
                 .setImage(npc.image)
                 .setFooter({text: interaction.user.username,iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,});
-                interaction.reply({ embeds: [embed] }).then(() =>
+                interaction.reply({ embeds: [embed] });
+                /*.then(() =>
                 setTimeout(
                     () => interaction.deleteReply(),
                            10_000 // not sure if you wanted 2000 (2s) or 20000 (20s)
                 )
-                )
+                )*/
 
             } catch (e) {
                 console.error('Erro ao criar combate:', e);
@@ -106,12 +107,13 @@ module.exports = {
                     {name: "\u200B", value: `${barCreate(user,"PE")} **${map.sp}: **${user.PE} / ${user.MPE}`}
                 )
                 .setFooter({text: interaction.user.username,iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,});
-                interaction.reply({ embeds: [embed] }).then(() =>
+                interaction.reply({ embeds: [embed] });
+                /*.then(() =>
                 setTimeout(
                     () => interaction.deleteReply(),
                            10_000 // not sure if you wanted 2000 (2s) or 20000 (20s)
                 )
-                )
+                )*/
 
             } catch (e) {
                 console.error('Erro ao criar combate:', e);

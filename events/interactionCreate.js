@@ -52,6 +52,13 @@ module.exports = {
 		//  Lógica para comandos
 		if (!interaction.isChatInputCommand()) return;
 
+		// bloqueia comandos em DM
+		if (!interaction.guild) {
+			return interaction.reply({
+				content: '⚠️ Commands are not usable in private.',
+				ephemeral: true
+			});
+		}
 		const command = interaction.client.commands.get(interaction.commandName);
 
 		if (!command) {

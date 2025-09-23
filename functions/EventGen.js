@@ -86,7 +86,7 @@ function getEvent(tipo,cont = 0,ocup = 0,rank = 1) {
 function addItem(userId, itemId, quantidade) {
     const stmtCheck = db.prepare(`
     SELECT quantidade FROM user_inventory
-    WHERE user_id = ? AND item_id = ?
+    WHERE user_id = ? AND item_id = ? AND equipado = 0
     `);
 
     const existing = stmtCheck.get(userId, itemId);

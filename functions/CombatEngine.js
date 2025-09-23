@@ -195,7 +195,7 @@ class CombatEngine {
                 }
                 ////Pega a parte do corpo atingida e RD da mesma///////////////
                 const bpRD = this.pickBodyPart(defender, !aMove.foco ? this.foco : aMove.foco); //array: 0 nome da var de RD, 1 texto da parte do corpo, 2 modificador de dano
-                if (DEBUG) console.log("RD no" + defender[bpRD[1]] +":"+ defender[bpRD[0]]);
+                if (DEBUG) console.log("RD " + bpRD[1] +":"+ defender[bpRD[0]]);
 
                 if (hit) {
                     ////Calcula o Dano final e atualiza PV////////
