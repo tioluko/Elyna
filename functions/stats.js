@@ -304,6 +304,29 @@ function updatePerkMoves(userId) {
   }
 }
 
+function totalWeight(inv) {
+  let equipped = 0;
+  let unequipped = 0;
+
+  for (const i of inv) {
+    const itemWeight = i.peso * i.quantidade;
+
+    if (i.equipped) {
+      equipped += itemWeight;
+    } else {
+      unequipped += itemWeight;
+    }
+  }
+  const total = unequipped + equipped;
+
+  // ajusta escala se necessário (no seu exemplo você dividia por 10)
+  return {
+    total: total / 10,      // peso total
+    equip: equipped / 10,   // peso dos equipados
+    bag: unequipped / 10  // peso dos não equipados
+  };
+}
+
 module.exports = {
   createNewUser,
   update,
@@ -318,5 +341,6 @@ module.exports = {
   getTotalStats,
   npcInitialize,
   barCreate,
-  updatePerkMoves
+  updatePerkMoves,
+  totalWeight
 };

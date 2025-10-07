@@ -15,7 +15,7 @@ function describeMods(mods) {
     const rd = {};
     const others = [];
 
-    // 🔍 Separar RD e outros mods
+    // Separar RD e outros mods
     for (const key in mods) {
         if (key.startsWith('RD')) {
             rd[key] = mods[key];
@@ -23,16 +23,16 @@ function describeMods(mods) {
             // Traduz modXXX → +N XXX
             const attr = key.replace(/^mod/, '');
             const signal = mods[key] > 0 ? '+' : '';
-            others.push(`${signal}${mods[key]} ${attr.toUpperCase()}`);
+            others.push(`${signal}${mods[key]} ${jd[attr.toUpperCase()]}`);
         } else if ( key.startsWith('move') && typeof mods[key] === 'number') {
             // Traduz moveXXX → +N XXX
             const attr = key.replace(/^move/, '');
-            const signal = mods[key] > 0 ? '+' : '';
-            others.push(`${signal}${mods[key]} ${attr.toUpperCase()}`);
+            const signal = attr ==='DN' || attr ==='ALC' || attr ==='DNCRI' ? ': ' : mods[key] > 0 ? ' +' : '';
+            others.push(`${jd[attr.toUpperCase()]}${signal}${mods[key]}`);
         }
     }
 
-    // 🧠 Processar RD detalhado
+    // Processar RD detalhado
     const rdOut = (() => {
         if (Object.keys(rd).length === 0) return '';
 
@@ -63,9 +63,9 @@ function describeMods(mods) {
             grouped[val].push(label);
         }
 
-        return 'RD: ' + Object.entries(grouped)
+        return 'DR: ' + Object.entries(grouped)
         .sort((a, b) => b[0] - a[0])
-        .map(([val, locs]) => `${val}-${locs.join(', ')}`)
+        .map(([val, locs]) => `${val} (${locs.join(', ')})`)
         .join(', ');
     })();
 

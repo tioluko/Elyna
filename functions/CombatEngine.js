@@ -2,7 +2,7 @@ const { DEBUG } = require('../config.js');
 const { cloneDeep } = require('lodash');
 const { generateCombatImageBuffer } = require('../utils/ImageGen.js');
 const { db, updateUserData, getMoveById, updateCombat } = require('../utils/db.js');
-const { CombatTriggers, hasStatus, removeStatus, addStatus, reduceStatus, getStatusDuration, addDmgTypeEffect, addLimbDmgEffect } = require('../functions/CombatEffects.js');
+const { CombatTriggers, hasTag, getTagValue, hasStatus, removeStatus, addStatus, reduceStatus, getStatusDuration, addDmgTypeEffect, addLimbDmgEffect } = require('../functions/CombatEffects.js');
 const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
 const { processLootFromNPC, insertToInventory } = require('../functions/LootGen.js');
 const { info, ce, st, cf } = require('../data/locale.js');
@@ -109,7 +109,8 @@ class CombatEngine {
             ];
 
             const dtags = [
-                ...JSON.parse(defender.STATUS || '[]')
+                ...JSON.parse(defender.STATUS || '[]'),
+                ...JSON.parse(defender.TAGS || '[]'),
             ];
 
             this.acerto = 0;
@@ -232,9 +233,9 @@ class CombatEngine {
                     }
                     //////////////////////////////////
                     ////////REFLECT DAMAGE EFFECT///////////
-                    if (aMove.tipo === 1 && hasStatus(defender, "ACID")) {
+                    if (aMove.tipo === 1 && hasTag(defender, "ACID")) {
                         if (DEBUG) console.log('REFLECT EFFECT:', defender.STATUS);
-                        const acdmg = getStatusDuration(defender, "ACID");
+                        const acdmg = getTagValue(defender, "ACID");
                         attacker.PV -= acdmg;
                         this.log.push(`**${attacker.nome}** ${cf.tk} **${acdmg}** ${cf.acd_dmg}! 🧪`);
                     }
@@ -321,35 +322,54 @@ class CombatEngine {
 
     // Escolhe a ação do NPC
     chooseNpcAction(npc) {
-        const opts = [
-            [npc.move_1, npc.mod_move_1],
-            [npc.move_2, npc.mod_move_2],
-            [npc.move_3, npc.mod_move_3],
-        ].filter(([id]) => id);
+        // Espera que npc.moves seja um JSON como [[id, mods, qtd], ...]
+        let opts;
+        try {
+            opts = JSON.parse(npc.moves);
+        } catch (err) {
+            console.error(`[⚠️ NPC MOVES] npc.moves inválido:`, err.message);
+            return null;
+        }
 
-        let [id, mods] = opts[Math.floor(Math.random() * opts.length)];
+        // Expande cada move pela sua quantidade (qtd)
+        let pool = [];
+        for (const [id, mods, qtd] of opts) {
+            for (let i = 0; i < qtd; i++) {
+                pool.push([id, mods]);
+            }
+        }
+
+        // Remove inválidos
+        pool = pool.filter(([id]) => id);
+
+        // Sorteia um move da pool
+        let [id, mods] = pool[Math.floor(Math.random() * pool.length)];
         const PR = npc.PR;
+
+        // Chance de usar PR boost
         if (PR > 1 && this.chance(50)){
             npc.PR -= 1;
             addStatus(npc, "PR_BOOST");
         }
+        // Chance de usar rebalance (id=98)
         if (PR <= 1 && this.chance(40+(npc.INT*10))){
             return {
                 id: 98,
                 move:getMoveById(98)
             };
         }
+        // Verifica custo do move
         const selectedMove = getMoveById(id);
         const can_use = stats.handleSkillCost(npc, selectedMove);
 
         // Fallback para move_1 se não puder pagar
-        const fallbackMove = getMoveById(opts[0][0]);
+        const fallbackMove = getMoveById(pool[0][0]);
         const move = can_use ? selectedMove : fallbackMove;
 
-
+        // Aplica modificadores se existirem
         if (mods) {
             try {
-                const movemods = mods ? JSON.parse(mods) : null;
+                const movemods = typeof mods === "string" ? JSON.parse(mods) : mods;
                 for (const key in movemods) {
                     if (key in move && typeof move[key] === 'number') {
                         move[key] += movemods[key];
@@ -431,7 +451,7 @@ class CombatEngine {
                 : ce.r3;
 
                 if (DEBUG) console.log("Bonus Acerto:" + m.AC +"+"+ ag +"+"+ a[m.pericia] +"-"+ Math.floor(Math.max((d - m.ALC), 0) / (it || 1))+
-                    " Base Dano:"+ m.DN +"+"+ fo +"+"+  Math.max(0, d - (m.ALC + fo)) + " CritMod: " + m.DNCRI + " Alc:" + m.ALC +" Dist:"+ d);
+                    " Base Dano:"+ m.DN +"+"+ fo +"-"+  Math.max(0, d - (m.ALC + fo)) + " CritMod: " + m.DNCRI + " Alc:" + m.ALC +" Dist:"+ d);
             break;
             case 3: /*RangeB (recua e ataca) Armas de fogo/Bestas  Aumenta distancia em MOV
                 Acerto: Mod+AgiPer - (Distancia / Int)
@@ -552,6 +572,7 @@ class CombatEngine {
             case "e2": return [ "RD"+part , `in its ${u.exBdpart2}`, 0.5, `${u.exBdpart2}`];
             //case "e3": return [ "RD"+part , "na " + u.exBdpart3, 0.5];
             //case "e4": return [ "RD"+part , "na " + u.exBdpart4, 0.5];//just in case....
+            case "full": return [ "RDtr" , `in the body`, 1, "body"];
             case "mind": return [ "RM" , `in the brain`, 1, "mind"];
         }
     }

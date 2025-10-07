@@ -162,7 +162,14 @@ const jd = {
     pd: `Right Leg`,
     pe: `Left Leg`,
     bs: `Arms`,
-    ps: `Legs`
+    ps: `Legs`,
+    DN: `Pwr`,
+    AC: `Acc`,
+    INI: `Ini`,
+    RE: `Def`,
+    ALC: `Rng`,
+    CHCRI: `CritCh`,
+    DNCRI: `CritDmg`
 };
 const act = {
     no_char: `You don't have a character yet, use /newcharacter to create one!`,

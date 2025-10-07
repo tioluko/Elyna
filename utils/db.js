@@ -77,7 +77,7 @@ function initUserInventory(userId) {
 // Busca dados no inventorio do usuário
 function getUserInventory(userId) {
     return db.prepare(`
-    SELECT ui.*, i.nome, i.descricao, i.tipo, i.slot, i.mods, i.move_id
+    SELECT ui.*, i.nome, i.descricao, i.tipo, i.slot, i.mods, i.move_id, i.peso
     FROM user_inventory ui
     JOIN items i ON i.id = ui.item_id
     WHERE ui.user_id = ?
@@ -91,6 +91,15 @@ function updateUserInventory(inventoryId, updates) {
 
     const stmt = db.prepare(`UPDATE user_inventory SET ${placeholders} WHERE id = ?`);
     stmt.run(...values, inventoryId);
+}
+// Busca todos os dados de um unico item do usuário
+function getItemData(userId, invId) {
+    return db.prepare(`
+    SELECT ui.*, i.*
+    FROM user_inventory ui
+    JOIN items i ON i.id = ui.item_id
+    WHERE ui.user_id = ? AND ui.id = ?
+    `).get(userId, invId);
 }
 // Busca dados na lista de peculiaridades do usuário
 function getUserPerks(userId) {
@@ -281,6 +290,7 @@ module.exports = {
     getUserData,
     getUserMoves,
     getUserInventory,
+    getItemData,
     getUserPerks,
     getMoveById,
     getCombatState,

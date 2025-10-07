@@ -42,6 +42,7 @@ module.exports = {
 
     const perks = getUserPerks(interaction.user.id);
     const inv = getUserInventory(interaction.user.id);
+    const wg = stats.totalWeight(inv);
     const movesData = getUserMoves(interaction.user.id);
     const initpage = interaction.options.getInteger("page") ?? 0;
     console.log("page "+initpage);
@@ -138,7 +139,7 @@ module.exports = {
 
       const equipList = equipSection + "\n" + accSection.trim();
 
-      const itemList = backpack.map((i) => `• **${i.nome}** x${i.quantidade}`)
+      const itemList = backpack.map((i) => `• **${i.nome}** x${i.quantidade} ${i.peso>0 ? `(wg ${(i.peso*i.quantidade)/10})`:""}`)
       .join("\n");
       //const itemList = backpack.map(i => `• **${i.nome}** x${i.quantidade} \n-# ${i.descricao}`).join('\n');
 
@@ -157,24 +158,26 @@ module.exports = {
 
         //const danoStr = m.DN ? `Dano: ${m.DN}${m.ELE ? ` (${m.ELE})` : ''}` : '';
         let danoStr = '';
-        switch (m.tipo) {
-          case 1:
-            danoStr = `Dano: **${m.DN + u.FOR}**${m.ELE ? ` (${m.ELE})` : ''}`;
-            break;
-          case 2:
-            danoStr = `Dano: **${m.DN + u.FOR}**${m.ELE ? ` (${m.ELE})` : ''}`;
-            break;
-          case 3:
-            danoStr = `Dano: **${m.DN}**${m.ELE ? ` (${m.ELE})` : ''}`;
-            break;
-          case 4:
-            danoStr = `Dano: **${Math.floor(u.ESS + (u.NV * m.DN))}**${m.ELE ? ` (${m.ELE})` : ''}`;
-            break;
-          case 5:
-            danoStr = `Dano: **${Math.floor(u.ESS + (u.NV * m.DN))}**${m.ELE ? ` (${m.ELE})` : ''}`;
-            break;
-          default:
-            danoStr = ''; // tipo 0 ou indefinido
+        if (m.ELE !== 'nd'){
+          switch (m.tipo) {
+            case 1:
+              danoStr = `Dano: **${m.DN + u.FOR}**${m.ELE ? ` (${m.ELE})` : ''}`;
+              break;
+            case 2:
+              danoStr = `Dano: **${m.DN + u.FOR}**${m.ELE ? ` (${m.ELE})` : ''}`;
+              break;
+            case 3:
+              danoStr = `Dano: **${m.DN}**${m.ELE ? ` (${m.ELE})` : ''}`;
+              break;
+            case 4:
+              danoStr = `Dano: **${Math.floor(u.ESS + (u.NV * m.DN))}**${m.ELE ? ` (${m.ELE})` : ''}`;
+              break;
+            case 5:
+              danoStr = `Dano: **${Math.floor(u.ESS + (u.NV * m.DN))}**${m.ELE ? ` (${m.ELE})` : ''}`;
+              break;
+            default:
+              danoStr = ''; // tipo 0 ou indefinido
+          }
         }
         return `**${m.nome}**  ${danoStr} <${origemLabel}${m.tipo !== 0 ? ` (${st[m.pericia.toLowerCase()]})>` : '>'}`;
       }).join('\n') || ficha.empty;
@@ -311,8 +314,7 @@ module.exports = {
                 .setThumbnail(user.image)
                 .setFooter({text: interaction.user.username, iconURL: `https://cdn.discordapp.com/avatars/${interaction.user.id}/${interaction.user.avatar}.png`,})
                 .addFields(
-                  {name: `***${ficha.inventory}***`, value: `*${ficha.wg}:* ***???***`, inline: true,}, //Botar peso total aqui
-                  {name: "\u200B", value: `*${ficha.wg}*`, inline: true },
+                  {name: `***${ficha.inventory}***`, value: `*${ficha.wg}:* ${wg.total}`, inline: true,}, //Botar peso total aqui
                   {name: "\u200B", value: "\u200B" },
                   {name: "\u200B", value: itemList || ficha.empty, inline: true },
                   {name: "\u200B", value: "\u200B", inline: true }, //Botar peso do item aqui

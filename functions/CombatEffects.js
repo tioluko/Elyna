@@ -422,7 +422,7 @@ function addDmgTypeEffect (entity, ele, log, pow = 1 ){
             }return;
         }case "qm": {
             log.push (`⚠️ **${entity.nome}** `+ (hasStatus(entity, "BURN") ? `${cf.add_brn}` : `${cf.is_brn}`));
-            if (hasStatus(entity, "PLANT")) addStatus(entity, "BURN", (5*pow));
+            if (hasTag(entity, "PLANT")) addStatus(entity, "BURN", (5*pow));
             addStatus(entity, "BURN", (5*pow));
             return;
         }case "vt": {
@@ -435,7 +435,7 @@ function addDmgTypeEffect (entity, ele, log, pow = 1 ){
 }
 
 function canEffect (entity, effect ){
-    if (hasStatus(entity, "UNDEAD")) {
+    if (hasTag(entity, "UNDEAD")) {
         switch (effect) {
             case "BLEED":
             case "POISON":
@@ -445,7 +445,7 @@ function canEffect (entity, effect ){
             }
         }
     }
-    if (hasStatus(entity, "CONSTRUCT")) {
+    if (hasTag(entity, "CONSTRUCT")) {
         switch (effect) {
             case "STUN":
             case "BLEED":
@@ -456,7 +456,7 @@ function canEffect (entity, effect ){
             }
         }
     }
-    if (hasStatus(entity, "PLANT")) {
+    if (hasTag(entity, "PLANT")) {
         switch (effect) {
             case "BLEED":
             case "NAUSEA": {

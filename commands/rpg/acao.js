@@ -116,7 +116,7 @@ module.exports = {
         }
         const evento = user.EVENT;
         const pr = interaction.options.getBoolean('rp');
-        const fc = interaction.options.getString('focus');
+        let fc = interaction.options.getString('focus');
 
         if (evento.startsWith('combate:')) {
 
@@ -128,6 +128,7 @@ module.exports = {
             const userMoves = getUserMoves(user.id);
             const selected = userMoves.find(m => m.move_id === moveId);
             const player = JSON.parse(combat.user_data); //Tentar recarregar os dados do user pra atualizar esse troço...
+            if (selected.foco) fc = null;
 
             const can_use = stats.handleSkillCost(player, selected, pr, fc);
             //if (DEBUG) console.log("PM/PR antes>",player.PM, player.PR, can_use);
@@ -152,7 +153,10 @@ module.exports = {
             await interaction.deferReply();
 
             updateCombatUserData(combat.id, player);
-            if (DEBUG) console.log(JSON.parse(getCombatState(user.id).user_data).STATUS);
+            if (DEBUG) {
+                const stdata = JSON.parse(getCombatState(user.id).user_data);
+                if (DEBUG) console.log(stdata.TAGS,stdata.STATUS);
+            }
             //if (DEBUG) console.log("PM/PRdepois>",player.PM, player.PR);
             //if (DEBUG) console.log("pr usado?",pr);
 
